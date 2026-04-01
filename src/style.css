@@ -70,7 +70,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 20px;
+  padding: 4px 20px;
   border: none;
   background: none;
   font-size: 13px;
@@ -98,6 +98,48 @@ body {
 }
 
 .sidebar-item svg { color: var(--muted); flex-shrink: 0; }
+
+.sidebar-item-row {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-item-row .sidebar-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-add-child {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.3;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.sidebar-add-child svg {
+  color: var(--muted);
+  transition: color 0.15s;
+}
+
+.sidebar-item:hover .sidebar-add-child { opacity: 0.6; }
+
+.sidebar-item .sidebar-add-child:hover {
+  opacity: 1;
+  background: var(--bg);
+}
+
+.sidebar-item .sidebar-add-child:hover svg {
+  color: var(--accent);
+}
 
 .sidebar-item.new {
   color: var(--muted);

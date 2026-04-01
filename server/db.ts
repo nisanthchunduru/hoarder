@@ -33,9 +33,15 @@ db.exec(`
 `);
 
 // Migration: add collection_id to links if missing
-const cols = db.prepare("PRAGMA table_info(links)").all() as { name: string }[];
-if (!cols.some(c => c.name === "collection_id")) {
+const linkCols = db.prepare("PRAGMA table_info(links)").all() as { name: string }[];
+if (!linkCols.some(c => c.name === "collection_id")) {
   db.exec("ALTER TABLE links ADD COLUMN collection_id INTEGER REFERENCES collections(id) ON DELETE SET NULL");
+}
+
+// Migration: add parent_id to collections if missing
+const collCols = db.prepare("PRAGMA table_info(collections)").all() as { name: string }[];
+if (!collCols.some(c => c.name === "parent_id")) {
+  db.exec("ALTER TABLE collections ADD COLUMN parent_id INTEGER REFERENCES collections(id) ON DELETE SET NULL");
 }
 
 export default db;

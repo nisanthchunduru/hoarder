@@ -13,7 +13,7 @@ interface Link {
 }
 
 interface TagCount { name: string; count: number; }
-interface Collection { id: number; name: string; count: number; }
+interface Collection { id: number; name: string; count: number; parent_id: number | null; }
 type Tab = "unread" | "archived";
 
 const TAG_COLORS = [
@@ -50,8 +50,8 @@ const api = {
   delete: (id: number) => fetch(`/api/links/${id}`, { method: "DELETE" }),
   tags: () => fetch("/api/tags").then(r => r.json()),
   collections: () => fetch("/api/collections").then(r => r.json()),
-  createCollection: (name: string) =>
-    fetch("/api/collections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }).then(r => r.json()),
+  createCollection: (name: string, parent_id?: number) =>
+    fetch("/api/collections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, parent_id }) }).then(r => r.json()),
   deleteCollection: (id: number) => fetch(`/api/collections/${id}`, { method: "DELETE" }),
 };
 
@@ -246,6 +246,7 @@ export default function App() {
   const [url, setUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [newCollection, setNewCollection] = useState("");
+  const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
 
   useEffect(() => {
@@ -279,10 +280,57 @@ export default function App() {
   const handleNewCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollection.trim()) return;
-    await api.createCollection(newCollection.trim());
+    await api.createCollection(newCollection.trim(), newCollectionParent || undefined);
     setNewCollection("");
     setShowNewCollection(false);
+    setNewCollectionParent(null);
     load();
+  };
+
+  const startNewCollection = (parentId: number | null = null) => {
+    setNewCollectionParent(parentId);
+    setShowNewCollection(true);
+  };
+
+  const cancelNewCollection = () => {
+    setNewCollection("");
+    setShowNewCollection(false);
+    setNewCollectionParent(null);
+  };
+
+  const renderCollections = (parentId: number | null, depth: number): React.ReactNode => {
+    const children = collections.filter(c => (c.parent_id ?? null) === parentId);
+    return children.map(c => (
+      <div key={c.id}>
+        <div className="sidebar-item-row" style={{ paddingLeft: 12 + depth * 16 }}>
+          <button
+            className={`sidebar-item${filterCollection === c.id ? " active" : ""}`}
+            onClick={() => setFilterCollection(filterCollection === c.id ? undefined : c.id)}
+            onDragOver={e => e.preventDefault()}
+            onDragEnter={e => e.currentTarget.classList.add("drop-over")}
+            onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
+            onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, c.id).then(load); } }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
+            {c.name}
+            <span className="sidebar-add-child" title="Add sub-collection" onClick={e => { e.stopPropagation(); startNewCollection(c.id); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
+          </button>
+        </div>
+        {showNewCollection && newCollectionParent === c.id && (
+          <form onSubmit={handleNewCollection} className="sidebar-new-form" style={{ paddingLeft: 12 + (depth + 1) * 16 }}>
+            <input
+              value={newCollection}
+              onChange={e => setNewCollection(e.target.value)}
+              placeholder="Sub-collection name"
+              autoFocus
+              onBlur={() => { if (!newCollection.trim()) cancelNewCollection(); }}
+              onKeyDown={e => { if (e.key === "Escape") cancelNewCollection(); }}
+            />
+          </form>
+        )}
+        {renderCollections(c.id, depth + 1)}
+      </div>
+    ));
   };
 
   return (
@@ -291,49 +339,33 @@ export default function App() {
         <h1 className="sidebar-logo">Hoarder</h1>
         <nav className="sidebar-nav">
           <span className="sidebar-label">Collections</span>
-          <button
-            className={`sidebar-item${!filterCollection ? " active" : ""}`}
-            onClick={() => setFilterCollection(undefined)}
-            onDragOver={e => e.preventDefault()}
-            onDragEnter={e => e.currentTarget.classList.add("drop-over")}
-            onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
-            onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, null).then(load); } }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
-            All
-          </button>
-          {collections.map(c => (
+          <div className="sidebar-item-row">
             <button
-              key={c.id}
-              className={`sidebar-item${filterCollection === c.id ? " active" : ""}`}
-              onClick={() => setFilterCollection(filterCollection === c.id ? undefined : c.id)}
+              className={`sidebar-item${!filterCollection ? " active" : ""}`}
+              onClick={() => setFilterCollection(undefined)}
               onDragOver={e => e.preventDefault()}
               onDragEnter={e => e.currentTarget.classList.add("drop-over")}
               onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
-              onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, c.id).then(load); } }}
+              onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, null).then(load); } }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
-              {c.name}
-              <span className="sidebar-count">{c.count}</span>
+              All
+              <span className="sidebar-add-child" title="New collection" onClick={e => { e.stopPropagation(); startNewCollection(null); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
             </button>
-          ))}
-          {showNewCollection ? (
+          </div>
+          {showNewCollection && newCollectionParent === null && (
             <form onSubmit={handleNewCollection} className="sidebar-new-form">
               <input
                 value={newCollection}
                 onChange={e => setNewCollection(e.target.value)}
                 placeholder="Collection name"
                 autoFocus
-                onBlur={() => { if (!newCollection.trim()) setShowNewCollection(false); }}
-                onKeyDown={e => { if (e.key === "Escape") setShowNewCollection(false); }}
+                onBlur={() => { if (!newCollection.trim()) cancelNewCollection(); }}
+                onKeyDown={e => { if (e.key === "Escape") cancelNewCollection(); }}
               />
             </form>
-          ) : (
-            <button className="sidebar-item new" onClick={() => setShowNewCollection(true)}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-              New collection
-            </button>
           )}
+          {renderCollections(null, 0)}
         </nav>
       </aside>
 

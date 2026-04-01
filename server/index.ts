@@ -158,9 +158,9 @@ app.get("/api/collections", (_req, res) => {
 });
 
 app.post("/api/collections", (req, res) => {
-  const { name } = req.body;
+  const { name, parent_id } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: "name required" });
-  db.prepare("INSERT OR IGNORE INTO collections (name) VALUES (?)").run(name.trim());
+  db.prepare("INSERT OR IGNORE INTO collections (name, parent_id) VALUES (?, ?)").run(name.trim(), parent_id ?? null);
   res.json(db.prepare("SELECT * FROM collections WHERE name = ?").get(name.trim()));
 });
 
