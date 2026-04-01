@@ -53,6 +53,10 @@ const api = {
   createCollection: (name: string, parent_id?: number) =>
     fetch("/api/collections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, parent_id }) }).then(r => r.json()),
   deleteCollection: (id: number) => fetch(`/api/collections/${id}`, { method: "DELETE" }),
+  moveCollection: (id: number, parent_id: number | null) =>
+    fetch(`/api/collections/${id}/parent`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ parent_id }) }),
+  renameCollection: (id: number, name: string) =>
+    fetch(`/api/collections/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }),
 };
 
 function hostname(url: string) {
@@ -254,6 +258,8 @@ export default function App() {
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [groupByDomain, setGroupByDomain] = useState(false);
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   useEffect(() => {
     const p = new URLSearchParams();
@@ -304,6 +310,17 @@ export default function App() {
     setNewCollectionParent(null);
   };
 
+  const handleDrop = (e: React.DragEvent, targetCollectionId: number | null) => {
+    e.currentTarget.classList.remove("drop-over");
+    const linkId = e.dataTransfer.getData("text/link-id");
+    const collId = e.dataTransfer.getData("text/collection-id");
+    if (linkId) {
+      api.setCollection(+linkId, targetCollectionId).then(load);
+    } else if (collId && +collId !== targetCollectionId) {
+      api.moveCollection(+collId, targetCollectionId).then(load);
+    }
+  };
+
   const renderCollections = (parentId: number | null, depth: number): React.ReactNode => {
     const children = collections.filter(c => (c.parent_id ?? null) === parentId);
     return children.map(c => (
@@ -311,14 +328,30 @@ export default function App() {
         <div className="sidebar-item-row" style={{ paddingLeft: 12 + depth * 16 }}>
           <button
             className={`sidebar-item${filterCollection === c.id ? " active" : ""}`}
-            onClick={() => setFilterCollection(filterCollection === c.id ? undefined : c.id)}
+            draggable={renamingId !== c.id}
+            onClick={() => { if (renamingId !== c.id) setFilterCollection(filterCollection === c.id ? undefined : c.id); }}
+            onDoubleClick={e => { e.stopPropagation(); setFilterCollection(c.id); setRenamingId(c.id); setRenameValue(c.name); }}
+            onDragStart={e => { e.dataTransfer.setData("text/collection-id", String(c.id)); e.dataTransfer.effectAllowed = "move"; }}
             onDragOver={e => e.preventDefault()}
             onDragEnter={e => e.currentTarget.classList.add("drop-over")}
             onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
-            onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, c.id).then(load); } }}
+            onDrop={e => handleDrop(e, c.id)}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
-            {c.name}
+            {renamingId === c.id ? (
+              <input
+                className="sidebar-rename-input"
+                value={renameValue}
+                onChange={e => setRenameValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && renameValue.trim()) { api.renameCollection(c.id, renameValue.trim()).then(load); setRenamingId(null); }
+                  if (e.key === "Escape") setRenamingId(null);
+                }}
+                onBlur={() => { if (renameValue.trim() && renameValue !== c.name) { api.renameCollection(c.id, renameValue.trim()).then(load); } setRenamingId(null); }}
+                onClick={e => e.stopPropagation()}
+                autoFocus
+              />
+            ) : c.name}
             <span className="sidebar-add-child" title="Add sub-collection" onClick={e => { e.stopPropagation(); startNewCollection(c.id); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
           </button>
         </div>
@@ -352,7 +385,7 @@ export default function App() {
               onDragOver={e => e.preventDefault()}
               onDragEnter={e => e.currentTarget.classList.add("drop-over")}
               onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
-              onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, null).then(load); } }}
+              onDrop={e => handleDrop(e, null)}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
               All

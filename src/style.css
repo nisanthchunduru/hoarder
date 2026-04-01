@@ -149,6 +149,18 @@ body {
 .sidebar-item.new:hover { color: var(--accent); }
 .sidebar-item.new:hover svg { color: var(--accent); }
 
+.sidebar-rename-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--accent);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border-bottom: none;
+}
+
 .sidebar-count {
   margin-left: auto;
   font-size: 11px;

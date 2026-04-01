@@ -170,6 +170,21 @@ app.delete("/api/collections/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+// Move collection under another
+app.patch("/api/collections/:id/parent", (req, res) => {
+  const { parent_id } = req.body;
+  db.prepare("UPDATE collections SET parent_id = ? WHERE id = ?").run(parent_id ?? null, req.params.id);
+  res.json(db.prepare("SELECT * FROM collections WHERE id = ?").get(req.params.id));
+});
+
+// Rename collection
+app.patch("/api/collections/:id", (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: "name required" });
+  db.prepare("UPDATE collections SET name = ? WHERE id = ?").run(name.trim(), req.params.id);
+  res.json(db.prepare("SELECT * FROM collections WHERE id = ?").get(req.params.id));
+});
+
 // Move link to collection
 app.patch("/api/links/:id/collection", (req, res) => {
   const { collection_id } = req.body;
