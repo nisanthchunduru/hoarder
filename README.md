@@ -2,6 +2,8 @@
 
 A private, self-hostable and beautiful read-it-later app for saving links for later
 
+<img width="3680" height="2222" alt="image" src="https://github.com/user-attachments/assets/9e6a3049-2698-4073-91aa-379af8f20b2b" />
+
 ## Features
 
 - Add/delete a link
