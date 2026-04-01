@@ -1,6 +1,8 @@
 # Hoarder
 
-A private, self-hostable and beautiful read-it-later app for saving links for later
+A private, easily self-hostable and beautiful "save it later" app
+
+Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar services
 
 ## Features
 
