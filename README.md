@@ -13,14 +13,16 @@ Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar servi
 
 - Create a collection
 - Add/remove a link from a collection
+- Nest a collection under another collection
+- Group links in a collection by domain
 
 ### Tags
 
 - View links having a tag
-- Archive/unarchive a link
 
 ### Archive
 
+- Archive/unarchive a link
 - View archived links
 
 ## Setup
