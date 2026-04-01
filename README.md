@@ -67,3 +67,7 @@ and visit [http://localhost:5173](http://localhost:5173)
 ### Languages
 
 - TypeScript
+
+## Credits
+
+Built in collaboration with [Kiro CLI](https://kiro.dev/cli/) + Claude Opus 4.5+
