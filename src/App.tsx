@@ -372,9 +372,25 @@ export default function App() {
     ));
   };
 
+  const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => { localStorage.setItem("sidebarWidth", String(sidebarWidth)); }, [sidebarWidth]);
+
+  const onResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = sidebarWidth;
+    const onMove = (ev: MouseEvent) => setSidebarWidth(Math.max(220, startW + ev.clientX - startX));
+    const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
   return (
     <div className="layout">
-      <aside className="sidebar">
+      <div className="sidebar-wrapper" style={{ width: sidebarWidth, position: "relative", flexShrink: 0 }}>
+        <aside className="sidebar">
         <h1 className="sidebar-logo">Hoarder</h1>
         <nav className="sidebar-nav">
           <span className="sidebar-label">Collections</span>
@@ -406,7 +422,9 @@ export default function App() {
           )}
           {renderCollections(null, 0)}
         </nav>
-      </aside>
+        <div className="sidebar-resize" onMouseDown={onResizeStart} onDoubleClick={() => setSidebarWidth(220)} />
+        </aside>
+      </div>
 
       <main className="main">
         <form onSubmit={handleAdd} className="add-bar">

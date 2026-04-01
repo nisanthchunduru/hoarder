@@ -31,8 +31,7 @@ body {
 }
 
 .sidebar {
-  width: 220px;
-  flex-shrink: 0;
+  width: 100%;
   background: var(--surface);
   border-right: 1.5px solid var(--border);
   padding: 24px 0;
@@ -42,6 +41,22 @@ body {
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-resize {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.sidebar-resize:hover {
+  background: var(--accent);
+  opacity: 0.3;
 }
 
 .sidebar-logo {
