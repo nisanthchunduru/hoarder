@@ -101,6 +101,8 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
 
   const cancel = () => { setTags(link.tags); setEditing(false); setInput(""); };
 
+  const close = () => { setEditing(false); setInput(""); };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown" && filtered.length) { e.preventDefault(); setHlIndex(i => Math.min(i + 1, filtered.length - 1)); }
     else if (e.key === "ArrowUp" && filtered.length) { e.preventDefault(); setHlIndex(i => Math.max(i - 1, 0)); }
@@ -108,8 +110,11 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
       e.preventDefault();
       if (filtered.length && hlIndex >= 0) addTag(filtered[hlIndex]);
       else if (input.trim()) addTag(input);
+      close();
     }
-    else if ((e.key === "," || e.key === "Tab") && input.trim()) { e.preventDefault(); addTag(input); }
+    else if (e.key === "Tab" && input.trim()) { e.preventDefault(); addTag(input); }
+    else if (e.key === "Tab" && !input.trim()) { close(); }
+    else if (e.key === "," && input.trim()) { e.preventDefault(); addTag(input); }
     else if (e.key === "Backspace" && !input && tags.length) removeTag(tags[tags.length - 1]);
     else if (e.key === "Escape") cancel();
   };
@@ -147,7 +152,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search or create tag…"
+            placeholder="Search or create tag…  ⏎ done · ⇥ add more"
             aria-autocomplete="list"
           />
         </div>
