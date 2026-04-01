@@ -131,11 +131,16 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
   };
 
   if (!editing) {
+    const quickRemove = (t: string) => {
+      const next = link.tags.filter(x => x !== t);
+      setTags(next);
+      api.setTags(link.id, next).then(onUpdate);
+    };
     return (
       <div className="tag-row">
-        {link.tags.map(t => <Chip key={t} name={t} />)}
+        {link.tags.map(t => <Chip key={t} name={t} onRemove={() => quickRemove(t)} />)}
         <button className="add-tag-btn" onClick={() => setEditing(true)}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           Add tag
         </button>
       </div>
@@ -147,7 +152,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
       <div className="tag-row">
         {link.tags.map(t => <Chip key={t} name={t} />)}
         <button className="add-tag-btn active" onClick={cancel}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           Add tag
         </button>
       </div>
@@ -215,9 +220,9 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
     <div className="card-menu" ref={ref}>
       <button className="card-menu-trigger" onClick={() => { setOpen(!open); }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="3" r="1.2" fill="currentColor"/>
+          <circle cx="8" cy="4" r="1.2" fill="currentColor"/>
           <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
-          <circle cx="8" cy="13" r="1.2" fill="currentColor"/>
+          <circle cx="8" cy="12" r="1.2" fill="currentColor"/>
         </svg>
       </button>
       {open && (
@@ -248,6 +253,7 @@ export default function App() {
   const [newCollection, setNewCollection] = useState("");
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
+  const [groupByDomain, setGroupByDomain] = useState(false);
 
   useEffect(() => {
     const p = new URLSearchParams();
@@ -380,61 +386,88 @@ export default function App() {
             <button className={tab === "unread" ? "active" : ""} onClick={() => setTab("unread")}>Unread</button>
             <button className={tab === "archived" ? "active" : ""} onClick={() => setTab("archived")}>Archive</button>
           </div>
+          {filterCollection && (
+            <button
+              className={`group-toggle${groupByDomain ? " active" : ""}`}
+              onClick={() => setGroupByDomain(!groupByDomain)}
+              title="Group by domain"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>
+            </button>
+          )}
           <input type="search" placeholder="Search" className="search" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        {allTags.length > 0 && (
-          <div className="tag-filter">
-            <button className={!filterTag ? "active" : ""} onClick={() => setFilterTag(undefined)}>All</button>
-            {allTags.map(t => {
-              const c = tagColor(t.name);
-              return (
-                <button
-                  key={t.name}
-                  className={filterTag === t.name ? "active" : ""}
-                  onClick={() => setFilterTag(filterTag === t.name ? undefined : t.name)}
-                  style={filterTag === t.name ? { borderColor: c.border, color: c.text, background: c.bg } : undefined}
-                >
-                  {t.name} <span className="tag-count">{t.count}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {(() => {
+          const visibleTags = [...new Set(links.flatMap(l => l.tags))].sort();
+          return visibleTags.length > 0 && (
+            <div className="tag-filter">
+              <button className={!filterTag ? "active" : ""} onClick={() => setFilterTag(undefined)}>All</button>
+              {visibleTags.map(name => {
+                const c = tagColor(name);
+                return (
+                  <button
+                    key={name}
+                    className={filterTag === name ? "active" : ""}
+                    onClick={() => setFilterTag(filterTag === name ? undefined : name)}
+                    style={filterTag === name ? { borderColor: c.border, color: c.text, background: c.bg } : undefined}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {links.length === 0 ? (
           <p className="empty">
             {search || filterTag || filterCollection ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
           </p>
-        ) : (
-          <ul className="link-list">
-            {links.map(l => (
-              <li key={l.id} className="link-card" draggable
-                onDragStart={e => { e.dataTransfer.setData("text/link-id", String(l.id)); e.dataTransfer.effectAllowed = "move"; }}
-              >
-                <div className="card-grip">
-                  <button className="copy-btn" title="Copy link" onClick={() => { navigator.clipboard.writeText(l.url); }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M9.5 4.5V3a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 3v5A1.5 1.5 0 003 9.5h1.5" stroke="currentColor" strokeWidth="1.2"/></svg>
-                  </button>
-                </div>
-                <div className="link-body">
-                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="link-main">
-                    <span className="link-title">{l.url}</span>
-                    <span className="link-meta">
-                      {hostname(l.url)} · {timeAgo(l.created_at)}
-                      {l.collection_id && collections.find(c => c.id === l.collection_id) && (
-                        <> · <span className="link-collection">{collections.find(c => c.id === l.collection_id)!.name}</span></>
-                      )}
-                    </span>
-                    {l.description && <span className="link-desc">{l.description}</span>}
-                  </a>
-                  <LinkTags link={l} allTags={allTags.map(t => t.name)} onUpdate={load} />
-                </div>
-                <CardMenu link={l} onUpdate={load} />
-              </li>
-            ))}
-          </ul>
-        )}
+        ) : (() => {
+          const renderCard = (l: Link) => (
+            <li key={l.id} className="link-card" draggable
+              onDragStart={e => { e.dataTransfer.setData("text/link-id", String(l.id)); e.dataTransfer.effectAllowed = "move"; }}
+            >
+              <div className="card-grip">
+                <button className="copy-btn" title="Copy link" onClick={() => { navigator.clipboard.writeText(l.url); }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M9.5 4.5V3a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 3v5A1.5 1.5 0 003 9.5h1.5" stroke="currentColor" strokeWidth="1.2"/></svg>
+                </button>
+              </div>
+              <div className="link-body">
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className="link-main">
+                  <span className="link-title">{l.url}</span>
+                  <span className="link-meta">
+                    {hostname(l.url)} · {timeAgo(l.created_at)}
+                  </span>
+                  {l.description && <span className="link-desc">{l.description}</span>}
+                </a>
+                <LinkTags link={l} allTags={allTags.map(t => t.name)} onUpdate={load} />
+              </div>
+              <CardMenu link={l} onUpdate={load} />
+            </li>
+          );
+
+          if (groupByDomain && filterCollection) {
+            const groups: Record<string, Link[]> = {};
+            for (const l of links) {
+              const d = hostname(l.url);
+              (groups[d] ??= []).push(l);
+            }
+            return (
+              <div className="grouped-links">
+                {Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).map(([domain, items]) => (
+                  <div key={domain} className="domain-group">
+                    <div className="domain-header">{domain}</div>
+                    <ul className="link-list">{items.map(renderCard)}</ul>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
+          return <ul className="link-list">{links.map(renderCard)}</ul>;
+        })()}
       </main>
     </div>
   );

@@ -225,10 +225,13 @@ body {
 /* ── Toolbar ── */
 .toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  gap: 12px;
+  gap: 8px;
+}
+
+.toolbar .search {
+  margin-left: auto;
 }
 
 .tabs {
@@ -270,6 +273,45 @@ body {
 
 .search:focus { border-color: var(--accent); }
 
+.group-toggle {
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s;
+}
+
+.group-toggle:hover { border-color: #ccc; color: var(--text); }
+
+.group-toggle.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff5f0;
+}
+
+/* ── Domain groups ── */
+.domain-group {
+  margin-bottom: 20px;
+}
+
+.domain-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 0 6px;
+  margin-bottom: 8px;
+}
+
+.domain-count {
+  font-weight: 400;
+  opacity: 0.5;
+}
+
 /* ── Chips ── */
 .chip {
   display: inline-flex;
@@ -288,11 +330,17 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 0 0 1px;
+  padding: 0;
+  margin-left: 1px;
   font-size: 14px;
   line-height: 1;
   opacity: 0.5;
   transition: opacity 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: 0.5px;
 }
 
 .chip-x:hover { opacity: 1; }
@@ -637,12 +685,14 @@ body {
 .card-menu-trigger {
   width: 28px;
   height: 28px;
+  padding: 0;
   border: 1.5px solid transparent;
   border-radius: 8px;
   background: none;
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
   transition: all 0.15s;
 }
