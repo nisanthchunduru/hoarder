@@ -7,11 +7,13 @@ interface Link {
   title: string;
   description: string;
   archived: number;
+  collection_id: number | null;
   created_at: string;
   tags: string[];
 }
 
 interface TagCount { name: string; count: number; }
+interface Collection { id: number; name: string; count: number; }
 type Tab = "unread" | "archived";
 
 const TAG_COLORS = [
@@ -32,15 +34,25 @@ function tagColor(name: string) {
 }
 
 const api = {
-  get: (q: string, archived: number, tag?: string) =>
-    fetch(`/api/links?archived=${archived}&q=${encodeURIComponent(q)}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}`).then(r => r.json()),
+  get: (q: string, archived: number, tag?: string, collectionId?: number) =>
+    fetch(`/api/links?archived=${archived}&q=${encodeURIComponent(q)}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}${collectionId ? `&collection_id=${collectionId}` : ""}`).then(r => r.json()),
   add: (url: string) =>
-    fetch("/api/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).then(r => r.json()),
+    fetch("/api/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).then(async r => {
+      const data = await r.json();
+      if (r.status === 409) return { ...data.link, _duplicate: true };
+      return data;
+    }),
   setTags: (id: number, tags: string[]) =>
     fetch(`/api/links/${id}/tags`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags }) }).then(r => r.json()),
+  setCollection: (id: number, collection_id: number | null) =>
+    fetch(`/api/links/${id}/collection`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection_id }) }),
   archive: (id: number) => fetch(`/api/links/${id}/archive`, { method: "PATCH" }),
   delete: (id: number) => fetch(`/api/links/${id}`, { method: "DELETE" }),
   tags: () => fetch("/api/tags").then(r => r.json()),
+  collections: () => fetch("/api/collections").then(r => r.json()),
+  createCollection: (name: string) =>
+    fetch("/api/collections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }).then(r => r.json()),
+  deleteCollection: (id: number) => fetch(`/api/collections/${id}`, { method: "DELETE" }),
 };
 
 function hostname(url: string) {
@@ -100,7 +112,6 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
   };
 
   const cancel = () => { setTags(link.tags); setEditing(false); setInput(""); };
-
   const close = () => { setEditing(false); setInput(""); };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -152,7 +163,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search or create tag…  ⏎ done · ⇥ add more"
+            placeholder="Search or create tag  ⏎ done · ⇥ add more"
             aria-autocomplete="list"
           />
         </div>
@@ -169,16 +180,11 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
               <span className="tag-popover-label">Suggestions</span>
               <ul className="tag-popover-list" role="listbox">
                 {filtered.map((s, i) => (
-                  <li
-                    key={s}
-                    role="option"
-                    aria-selected={i === hlIndex}
+                  <li key={s} role="option" aria-selected={i === hlIndex}
                     className={`tag-popover-option${i === hlIndex ? " hl" : ""}`}
                     onMouseDown={e => { e.preventDefault(); addTag(s); }}
                     onMouseEnter={() => setHlIndex(i)}
-                  >
-                    <Chip name={s} />
-                  </li>
+                  ><Chip name={s} /></li>
                 ))}
               </ul>
             </div>
@@ -200,14 +206,14 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); } };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   return (
     <div className="card-menu" ref={ref}>
-      <button className="card-menu-trigger" onClick={() => setOpen(!open)}>
+      <button className="card-menu-trigger" onClick={() => { setOpen(!open); }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="3" r="1.2" fill="currentColor"/>
           <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
@@ -229,18 +235,33 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
 }
 
 export default function App() {
+  const params = new URLSearchParams(window.location.search);
   const [links, setLinks] = useState<Link[]>([]);
   const [allTags, setAllTags] = useState<TagCount[]>([]);
-  const [tab, setTab] = useState<Tab>("unread");
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [tab, setTab] = useState<Tab>((params.get("tab") as Tab) || "unread");
   const [search, setSearch] = useState("");
-  const [filterTag, setFilterTag] = useState<string>();
+  const [filterTag, setFilterTag] = useState<string | undefined>(params.get("tag") || undefined);
+  const [filterCollection, setFilterCollection] = useState<number | undefined>(params.get("collection") ? Number(params.get("collection")) : undefined);
   const [url, setUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [newCollection, setNewCollection] = useState("");
+  const [showNewCollection, setShowNewCollection] = useState(false);
+
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (tab !== "unread") p.set("tab", tab);
+    if (filterCollection) p.set("collection", String(filterCollection));
+    if (filterTag) p.set("tag", filterTag);
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : "/");
+  }, [tab, filterCollection, filterTag]);
 
   const load = useCallback(() => {
-    api.get(search, tab === "archived" ? 1 : 0, filterTag).then(setLinks);
+    api.get(search, tab === "archived" ? 1 : 0, filterTag, filterCollection).then(setLinks);
     api.tags().then(setAllTags);
-  }, [search, tab, filterTag]);
+    api.collections().then(setCollections);
+  }, [search, tab, filterTag, filterCollection]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -248,72 +269,141 @@ export default function App() {
     e.preventDefault();
     if (!url.trim()) return;
     setSaving(true);
-    await api.add(url.trim());
+    const link = await api.add(url.trim());
+    if (filterCollection) await api.setCollection(link.id, filterCollection);
     setUrl("");
     setSaving(false);
     load();
   };
 
+  const handleNewCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCollection.trim()) return;
+    await api.createCollection(newCollection.trim());
+    setNewCollection("");
+    setShowNewCollection(false);
+    load();
+  };
+
   return (
-    <div className="shell">
-      <header>
-        <h1>Hoarder</h1>
-        <p className="tagline">your read-it-later corner</p>
-      </header>
-
-      <form onSubmit={handleAdd} className="add-bar">
-        <input type="url" placeholder="Paste a link…" value={url} onChange={e => setUrl(e.target.value)} required />
-        <button disabled={saving}>{saving ? "Adding…" : "Add"}</button>
-      </form>
-
-      <div className="toolbar">
-        <div className="tabs">
-          <button className={tab === "unread" ? "active" : ""} onClick={() => setTab("unread")}>Unread</button>
-          <button className={tab === "archived" ? "active" : ""} onClick={() => setTab("archived")}>Archive</button>
-        </div>
-        <input type="search" placeholder="Search…" className="search" value={search} onChange={e => setSearch(e.target.value)} />
-      </div>
-
-      {allTags.length > 0 && (
-        <div className="tag-filter">
-          <button className={!filterTag ? "active" : ""} onClick={() => setFilterTag(undefined)}>All</button>
-          {allTags.map(t => {
-            const c = tagColor(t.name);
-            return (
-              <button
-                key={t.name}
-                className={filterTag === t.name ? "active" : ""}
-                onClick={() => setFilterTag(filterTag === t.name ? undefined : t.name)}
-                style={filterTag === t.name ? { borderColor: c.border, color: c.text, background: c.bg } : undefined}
-              >
-                {t.name} <span className="tag-count">{t.count}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {links.length === 0 ? (
-        <p className="empty">
-          {search || filterTag ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
-        </p>
-      ) : (
-        <ul className="link-list">
-          {links.map(l => (
-            <li key={l.id} className="link-card">
-              <div className="link-body">
-                <a href={l.url} target="_blank" rel="noopener noreferrer" className="link-main">
-                  <span className="link-title">{l.title}</span>
-                  <span className="link-meta">{hostname(l.url)} · {timeAgo(l.created_at)}</span>
-                  {l.description && <span className="link-desc">{l.description}</span>}
-                </a>
-                <LinkTags link={l} allTags={allTags.map(t => t.name)} onUpdate={load} />
-              </div>
-              <CardMenu link={l} onUpdate={load} />
-            </li>
+    <div className="layout">
+      <aside className="sidebar">
+        <h1 className="sidebar-logo">Hoarder</h1>
+        <nav className="sidebar-nav">
+          <span className="sidebar-label">Collections</span>
+          <button
+            className={`sidebar-item${!filterCollection ? " active" : ""}`}
+            onClick={() => setFilterCollection(undefined)}
+            onDragOver={e => e.preventDefault()}
+            onDragEnter={e => e.currentTarget.classList.add("drop-over")}
+            onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
+            onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, null).then(load); } }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
+            All
+          </button>
+          {collections.map(c => (
+            <button
+              key={c.id}
+              className={`sidebar-item${filterCollection === c.id ? " active" : ""}`}
+              onClick={() => setFilterCollection(filterCollection === c.id ? undefined : c.id)}
+              onDragOver={e => e.preventDefault()}
+              onDragEnter={e => e.currentTarget.classList.add("drop-over")}
+              onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
+              onDrop={e => { e.currentTarget.classList.remove("drop-over"); const id = e.dataTransfer.getData("text/link-id"); if (id) { api.setCollection(+id, c.id).then(load); } }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
+              {c.name}
+              <span className="sidebar-count">{c.count}</span>
+            </button>
           ))}
-        </ul>
-      )}
+          {showNewCollection ? (
+            <form onSubmit={handleNewCollection} className="sidebar-new-form">
+              <input
+                value={newCollection}
+                onChange={e => setNewCollection(e.target.value)}
+                placeholder="Collection name"
+                autoFocus
+                onBlur={() => { if (!newCollection.trim()) setShowNewCollection(false); }}
+                onKeyDown={e => { if (e.key === "Escape") setShowNewCollection(false); }}
+              />
+            </form>
+          ) : (
+            <button className="sidebar-item new" onClick={() => setShowNewCollection(true)}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+              New collection
+            </button>
+          )}
+        </nav>
+      </aside>
+
+      <main className="main">
+        <form onSubmit={handleAdd} className="add-bar">
+          <input type="url" placeholder="Paste a link" value={url} onChange={e => setUrl(e.target.value)} required />
+          <button disabled={saving}>{saving ? "Adding…" : "Add"}</button>
+        </form>
+
+        <div className="toolbar">
+          <div className="tabs">
+            <button className={tab === "unread" ? "active" : ""} onClick={() => setTab("unread")}>Unread</button>
+            <button className={tab === "archived" ? "active" : ""} onClick={() => setTab("archived")}>Archive</button>
+          </div>
+          <input type="search" placeholder="Search" className="search" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+
+        {allTags.length > 0 && (
+          <div className="tag-filter">
+            <button className={!filterTag ? "active" : ""} onClick={() => setFilterTag(undefined)}>All</button>
+            {allTags.map(t => {
+              const c = tagColor(t.name);
+              return (
+                <button
+                  key={t.name}
+                  className={filterTag === t.name ? "active" : ""}
+                  onClick={() => setFilterTag(filterTag === t.name ? undefined : t.name)}
+                  style={filterTag === t.name ? { borderColor: c.border, color: c.text, background: c.bg } : undefined}
+                >
+                  {t.name} <span className="tag-count">{t.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {links.length === 0 ? (
+          <p className="empty">
+            {search || filterTag || filterCollection ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
+          </p>
+        ) : (
+          <ul className="link-list">
+            {links.map(l => (
+              <li key={l.id} className="link-card" draggable
+                onDragStart={e => { e.dataTransfer.setData("text/link-id", String(l.id)); e.dataTransfer.effectAllowed = "move"; }}
+              >
+                <div className="card-grip">
+                  <button className="copy-btn" title="Copy link" onClick={() => { navigator.clipboard.writeText(l.url); }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M9.5 4.5V3a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 3v5A1.5 1.5 0 003 9.5h1.5" stroke="currentColor" strokeWidth="1.2"/></svg>
+                  </button>
+                </div>
+                <div className="link-body">
+                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="link-main">
+                    <span className="link-title">{l.url}</span>
+                    <span className="link-meta">
+                      {hostname(l.url)} · {timeAgo(l.created_at)}
+                      {l.collection_id && collections.find(c => c.id === l.collection_id) && (
+                        <> · <span className="link-collection">{collections.find(c => c.id === l.collection_id)!.name}</span></>
+                      )}
+                    </span>
+                    {l.description && <span className="link-desc">{l.description}</span>}
+                  </a>
+                  <LinkTags link={l} allTags={allTags.map(t => t.name)} onUpdate={load} />
+                </div>
+                <CardMenu link={l} onUpdate={load} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
     </div>
   );
 }

@@ -60,7 +60,7 @@ function setLinkTags(linkId: number, tags: string[]) {
 
 // List links
 app.get("/api/links", (req, res) => {
-  const { q, archived, tag } = req.query;
+  const { q, archived, tag, collection_id } = req.query;
   let sql = "SELECT DISTINCT l.* FROM links l";
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -73,6 +73,10 @@ app.get("/api/links", (req, res) => {
   if (archived !== undefined) {
     conditions.push("l.archived = ?");
     params.push(Number(archived));
+  }
+  if (collection_id) {
+    conditions.push("l.collection_id = ?");
+    params.push(Number(collection_id));
   }
   if (q) {
     conditions.push("(l.title LIKE ? OR l.url LIKE ? OR l.description LIKE ?)");
@@ -100,6 +104,9 @@ app.get("/api/tags", (_req, res) => {
 app.post("/api/links", async (req, res) => {
   const { url, tags } = req.body;
   if (!url) return res.status(400).json({ error: "url required" });
+
+  const existing = db.prepare("SELECT * FROM links WHERE url = ?").get(url);
+  if (existing) return res.status(409).json({ error: "already exists", link: withTags(existing)[0] });
 
   const meta = await fetchMeta(url);
   const info = db
@@ -139,6 +146,35 @@ app.patch("/api/links/:id/archive", (req, res) => {
 app.delete("/api/links/:id", (req, res) => {
   db.prepare("DELETE FROM links WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
+});
+
+// Collections
+app.get("/api/collections", (_req, res) => {
+  res.json(
+    db.prepare(
+      "SELECT c.*, COUNT(l.id) as count FROM collections c LEFT JOIN links l ON l.collection_id = c.id GROUP BY c.id ORDER BY c.name"
+    ).all()
+  );
+});
+
+app.post("/api/collections", (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: "name required" });
+  db.prepare("INSERT OR IGNORE INTO collections (name) VALUES (?)").run(name.trim());
+  res.json(db.prepare("SELECT * FROM collections WHERE name = ?").get(name.trim()));
+});
+
+app.delete("/api/collections/:id", (req, res) => {
+  db.prepare("UPDATE links SET collection_id = NULL WHERE collection_id = ?").run(req.params.id);
+  db.prepare("DELETE FROM collections WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
+// Move link to collection
+app.patch("/api/links/:id/collection", (req, res) => {
+  const { collection_id } = req.body;
+  db.prepare("UPDATE links SET collection_id = ? WHERE id = ?").run(collection_id ?? null, req.params.id);
+  res.json(withTags(db.prepare("SELECT * FROM links WHERE id = ?").get(req.params.id))[0]);
 });
 
 const server = app.listen(3001, () =>

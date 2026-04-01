@@ -7,6 +7,11 @@ A private, self-hostable and beautiful read-it-later app for saving links for la
 - Add/delete a link
 - Add/delete 1 or more tags to a link
 
+## Collections
+
+- Create a collection
+- Add/remove a link from a collection
+
 ### Tags
 
 - View links having a tag

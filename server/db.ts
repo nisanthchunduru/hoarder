@@ -7,12 +7,18 @@ const db = new Database(path.join(__dirname, "..", "db", "hoarder.db"));
 
 db.pragma("journal_mode = WAL");
 db.exec(`
+  CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     url TEXT NOT NULL,
     title TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
     archived INTEGER NOT NULL DEFAULT 0,
+    collection_id INTEGER REFERENCES collections(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE TABLE IF NOT EXISTS tags (
@@ -25,5 +31,11 @@ db.exec(`
     PRIMARY KEY (link_id, tag_id)
   );
 `);
+
+// Migration: add collection_id to links if missing
+const cols = db.prepare("PRAGMA table_info(links)").all() as { name: string }[];
+if (!cols.some(c => c.name === "collection_id")) {
+  db.exec("ALTER TABLE links ADD COLUMN collection_id INTEGER REFERENCES collections(id) ON DELETE SET NULL");
+}
 
 export default db;
