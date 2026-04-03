@@ -257,7 +257,16 @@ export default function App() {
   const [newCollection, setNewCollection] = useState("");
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
-  const [groupByDomain, setGroupByDomain] = useState(false);
+  const [groupBy, setGroupBy] = useState<"none" | "domain" | "date">("none");
+  const [groupMenuOpen, setGroupMenuOpen] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!groupMenuOpen) return;
+    const close = (e: MouseEvent) => { if (groupRef.current && !groupRef.current.contains(e.target as Node)) setGroupMenuOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [groupMenuOpen]);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
@@ -438,13 +447,23 @@ export default function App() {
             <button className={tab === "archived" ? "active" : ""} onClick={() => setTab("archived")}>Archive</button>
           </div>
           {filterCollection && (
-            <button
-              className={`group-toggle${groupByDomain ? " active" : ""}`}
-              onClick={() => setGroupByDomain(!groupByDomain)}
-              title="Group by domain"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>
-            </button>
+            <div className="group-menu" ref={groupRef}>
+              <button
+                className={`group-toggle${groupBy !== "none" ? " active" : ""}`}
+                onClick={() => setGroupMenuOpen(!groupMenuOpen)}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>
+                <svg className="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              {groupMenuOpen && (
+                <div className="group-dropdown">
+                  <button className={groupBy === "none" ? "active" : ""} onClick={() => { setGroupBy("none"); setGroupMenuOpen(false); }}>None</button>
+                  <div className="group-dropdown-divider" />
+                  <button className={groupBy === "domain" ? "active" : ""} onClick={() => { setGroupBy("domain"); setGroupMenuOpen(false); }}>Domain</button>
+                  <button className={groupBy === "date" ? "active" : ""} onClick={() => { setGroupBy("date"); setGroupMenuOpen(false); }}>Date added</button>
+                </div>
+              )}
+            </div>
           )}
           <input type="search" placeholder="Search" className="search" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
@@ -499,17 +518,22 @@ export default function App() {
             </li>
           );
 
-          if (groupByDomain && filterCollection) {
+          if (groupBy !== "none" && filterCollection) {
             const groups: Record<string, Link[]> = {};
             for (const l of links) {
-              const d = hostname(l.url);
-              (groups[d] ??= []).push(l);
+              const key = groupBy === "domain"
+                ? hostname(l.url)
+                : new Date(l.created_at + "Z").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+              (groups[key] ??= []).push(l);
             }
+            const sorted = groupBy === "domain"
+              ? Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+              : Object.entries(groups);
             return (
               <div className="grouped-links">
-                {Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).map(([domain, items]) => (
-                  <div key={domain} className="domain-group">
-                    <div className="domain-header">{domain}</div>
+                {sorted.map(([label, items]) => (
+                  <div key={label} className="domain-group">
+                    <div className="domain-header">{label}</div>
                     <ul className="link-list">{items.map(renderCard)}</ul>
                   </div>
                 ))}
