@@ -308,9 +308,56 @@ body {
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 6px;
+  width: auto;
   transition: all 0.15s;
+}
+
+.group-chevron { opacity: 0.5; }
+
+.group-menu {
+  position: relative;
+}
+
+.group-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 120px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 4px;
+  z-index: 150;
+  animation: popIn 0.12s ease-out;
+}
+
+.group-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.group-dropdown button:hover { background: #f5f3f0; }
+.group-dropdown button.active { color: var(--accent); font-weight: 500; }
+
+.group-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
 }
 
 .group-toggle:hover { border-color: #ccc; color: var(--text); }
