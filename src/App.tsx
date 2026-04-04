@@ -509,6 +509,9 @@ export default function App() {
                   <span className="link-title">{l.url}</span>
                   <span className="link-meta">
                     {hostname(l.url)} · {timeAgo(l.created_at)}
+                    {!filterCollection && l.collection_id && collections.find(c => c.id === l.collection_id) && (
+                      <> · <span className="link-collection" onClick={e => { e.preventDefault(); e.stopPropagation(); setFilterCollection(l.collection_id!); }}>{collections.find(c => c.id === l.collection_id)!.name}</span></>
+                    )}
                   </span>
                   {l.description && <span className="link-desc">{l.description}</span>}
                 </a>

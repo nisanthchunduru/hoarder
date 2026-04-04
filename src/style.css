@@ -611,6 +611,11 @@ body {
 .link-collection {
   color: var(--accent);
   font-weight: 500;
+  cursor: pointer;
+}
+
+.link-collection:hover {
+  text-decoration: underline;
 }
 
 /* ── Tag filter bar ── */
