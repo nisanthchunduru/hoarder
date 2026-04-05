@@ -246,11 +246,15 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
 export default function App() {
   const params = new URLSearchParams(window.location.search);
   const [links, setLinks] = useState<Link[]>([]);
+  const [allLinks, setAllLinks] = useState<Link[]>([]);
   const [allTags, setAllTags] = useState<TagCount[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [tab, setTab] = useState<Tab>((params.get("tab") as Tab) || "unread");
   const [search, setSearch] = useState("");
-  const [filterTag, setFilterTag] = useState<string | undefined>(params.get("tag") || undefined);
+  const [filterTags, setFilterTags] = useState<string[]>(() => {
+    const t = params.get("tags");
+    return t ? t.split(",") : [];
+  });
   const [filterCollection, setFilterCollection] = useState<number | undefined>(params.get("collection") ? Number(params.get("collection")) : undefined);
   const [url, setUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -274,16 +278,23 @@ export default function App() {
     const p = new URLSearchParams();
     if (tab !== "unread") p.set("tab", tab);
     if (filterCollection) p.set("collection", String(filterCollection));
-    if (filterTag) p.set("tag", filterTag);
+    if (filterTags.length) p.set("tags", filterTags.join(","));
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : "/");
-  }, [tab, filterCollection, filterTag]);
+  }, [tab, filterCollection, filterTags]);
 
   const load = useCallback(() => {
-    api.get(search, tab === "archived" ? 1 : 0, filterTag, filterCollection).then(setLinks);
+    api.get(search, tab === "archived" ? 1 : 0, undefined, filterCollection).then((data: Link[]) => {
+      setAllLinks(data);
+      if (filterTags.length) {
+        setLinks(data.filter(l => filterTags.some(t => l.tags.includes(t))));
+      } else {
+        setLinks(data);
+      }
+    });
     api.tags().then(setAllTags);
     api.collections().then(setCollections);
-  }, [search, tab, filterTag, filterCollection]);
+  }, [search, tab, filterTags, filterCollection]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -330,9 +341,16 @@ export default function App() {
     }
   };
 
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+
+  const toggleCollapse = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
+
   const renderCollections = (parentId: number | null, depth: number): React.ReactNode => {
     const children = collections.filter(c => (c.parent_id ?? null) === parentId);
-    return children.map(c => (
+    return children.map(c => {
+      const hasChildren = collections.some(ch => ch.parent_id === c.id);
+      const isCollapsed = collapsed[c.id];
+      return (
       <div key={c.id}>
         <div className="sidebar-item-row" style={{ paddingLeft: 12 + depth * 16 }}>
           <button
@@ -346,7 +364,9 @@ export default function App() {
             onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
             onDrop={e => handleDrop(e, c.id)}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
+            <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(c.id); }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </span>
             {renamingId === c.id ? (
               <input
                 className="sidebar-rename-input"
@@ -376,9 +396,10 @@ export default function App() {
             />
           </form>
         )}
-        {renderCollections(c.id, depth + 1)}
+        {!isCollapsed && renderCollections(c.id, depth + 1)}
       </div>
-    ));
+      );
+    });
   };
 
   const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
@@ -400,6 +421,8 @@ export default function App() {
   const collMenuRef = useRef<HTMLDivElement>(null);
   const [breadcrumbDropdown, setBreadcrumbDropdown] = useState<number | null>(null);
   const breadcrumbDropdownRef = useRef<HTMLSpanElement>(null);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const tagMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!collMenuOpen) return;
@@ -414,6 +437,13 @@ export default function App() {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [breadcrumbDropdown]);
+
+  useEffect(() => {
+    if (!tagMenuOpen) return;
+    const close = (e: MouseEvent) => { if (tagMenuRef.current && !tagMenuRef.current.contains(e.target as Node)) setTagMenuOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [tagMenuOpen]);
 
   return (
     <div className="layout">
@@ -431,7 +461,9 @@ export default function App() {
               onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
               onDrop={e => handleDrop(e, null)}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6h11" stroke="currentColor" strokeWidth="1.2"/></svg>
+              <span className={`sidebar-chevron${collapsed[-1] ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(-1); }}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </span>
               All
               <span className="sidebar-add-child" title="New collection" onClick={e => { e.stopPropagation(); startNewCollection(null); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
             </button>
@@ -448,7 +480,7 @@ export default function App() {
               />
             </form>
           )}
-          {renderCollections(null, 0)}
+          {!collapsed[-1] && renderCollections(null, 0)}
         </nav>
         <div className="sidebar-resize" onMouseDown={onResizeStart} onDoubleClick={() => setSidebarWidth(220)} />
         </aside>
@@ -544,34 +576,42 @@ export default function App() {
                 </div>
               )}
           </div>
+          {(() => {
+            const visibleTags = [...new Set(allLinks.flatMap(l => l.tags))].sort();
+            const allVisible = [...new Set([...visibleTags, ...filterTags])].sort();
+            const toggleTag = (name: string) => {
+              setFilterTags(prev => prev.includes(name) ? prev.filter(t => t !== name) : [...prev, name]);
+            };
+            return allVisible.length > 0 && (
+              <div className="tag-filter-menu" ref={tagMenuRef}>
+                <button className={`tag-filter-toggle${filterTags.length ? " active" : ""}`} onClick={() => setTagMenuOpen(!tagMenuOpen)}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3h11M3.5 7h7M5.5 11h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                  <svg className="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                {tagMenuOpen && (
+                  <div className="tag-filter-dropdown">
+                    {allVisible.map(name => {
+                      const selected = filterTags.includes(name);
+                      return (
+                        <button key={name} className={selected ? "selected" : ""} onClick={() => toggleTag(name)}>
+                          <span className={`tag-checkbox${selected ? " checked" : ""}`}>
+                            {selected && <svg className="tag-checkmark" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 12c2 2 4.5 5.5 6 7c3-5 7-11 12-15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+                          </span>
+                          <Chip name={name} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <input type="search" placeholder="Search" className="search" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        {(() => {
-          const visibleTags = [...new Set(links.flatMap(l => l.tags))].sort();
-          return visibleTags.length > 0 && (
-            <div className="tag-filter">
-              <button className={!filterTag ? "active" : ""} onClick={() => setFilterTag(undefined)}>All</button>
-              {visibleTags.map(name => {
-                const c = tagColor(name);
-                return (
-                  <button
-                    key={name}
-                    className={filterTag === name ? "active" : ""}
-                    onClick={() => setFilterTag(filterTag === name ? undefined : name)}
-                    style={filterTag === name ? { borderColor: c.border, color: c.text, background: c.bg } : undefined}
-                  >
-                    {name}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })()}
-
         {links.length === 0 ? (
           <p className="empty">
-            {search || filterTag || filterCollection ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
+            {search || filterTags.length || filterCollection ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
           </p>
         ) : (() => {
           const renderCard = (l: Link) => (
