@@ -11,10 +11,10 @@ Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar servi
 
 ## Collections
 
-- Create a collection
+- Create/delete a collection
 - Add/remove a link from a collection
 - Nest a collection under another collection
-- Group links in a collection by domain
+- Group links in a collection by domain or date added
 
 ### Tags
 
