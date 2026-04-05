@@ -4,27 +4,6 @@ A private, easily self-hostable and beautiful "save it later" app
 
 Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar services
 
-## Features
-
-- Add/delete a link
-- Add/delete 1 or more tags to a link
-
-## Collections
-
-- Create/delete a collection
-- Add/remove a link from a collection
-- Nest a collection under another collection
-- Group links in a collection by domain or date added
-
-### Tags
-
-- View links having a tag
-
-### Archive
-
-- Archive/unarchive a link
-- View archived links
-
 ## Setup
 
 Clone the repo
@@ -49,6 +28,32 @@ npm run dev
 ```
 
 and visit [http://localhost:5173](http://localhost:5173)
+
+## TODOs
+
+- Release as a Chrome extension, a macOS app, or both
+- If released as a Chrome extension, offer an option to store data locally for guaranteed privacy
+
+## Features
+
+- Add/delete a link
+- Add/delete 1 or more tags to a link
+
+## Collections
+
+- Create/delete a collection
+- Add/remove a link from a collection
+- Nest a collection under another collection
+- Group links in a collection by domain or date added
+
+### Tags
+
+- View links having a tag
+
+### Archive
+
+- Archive/unarchive a link
+- View archived links
 
 ## Tech Stack
 
