@@ -436,6 +436,11 @@ export default function App() {
       </div>
 
       <main className="main">
+        <h2 className="page-title">
+          {filterCollection && collections.find(c => c.id === filterCollection)
+            ? collections.find(c => c.id === filterCollection)!.name
+            : "All"}
+        </h2>
         <form onSubmit={handleAdd} className="add-bar">
           <input type="url" placeholder="Paste a link" value={url} onChange={e => setUrl(e.target.value)} required />
           <button disabled={saving}>{saving ? "Adding…" : "Add"}</button>
@@ -446,8 +451,7 @@ export default function App() {
             <button className={tab === "unread" ? "active" : ""} onClick={() => setTab("unread")}>Unread</button>
             <button className={tab === "archived" ? "active" : ""} onClick={() => setTab("archived")}>Archive</button>
           </div>
-          {filterCollection && (
-            <div className="group-menu" ref={groupRef}>
+          <div className="group-menu" ref={groupRef}>
               <button
                 className={`group-toggle${groupBy !== "none" ? " active" : ""}`}
                 onClick={() => setGroupMenuOpen(!groupMenuOpen)}
@@ -463,8 +467,7 @@ export default function App() {
                   <button className={groupBy === "date" ? "active" : ""} onClick={() => { setGroupBy("date"); setGroupMenuOpen(false); }}>Date added</button>
                 </div>
               )}
-            </div>
-          )}
+          </div>
           <input type="search" placeholder="Search" className="search" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
@@ -521,7 +524,7 @@ export default function App() {
             </li>
           );
 
-          if (groupBy !== "none" && filterCollection) {
+          if (groupBy !== "none") {
             const groups: Record<string, Link[]> = {};
             for (const l of links) {
               const key = groupBy === "domain"

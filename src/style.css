@@ -250,6 +250,14 @@ body {
 .add-bar button:hover:not(:disabled) { background: var(--accent-hover); }
 .add-bar button:disabled { opacity: 0.6; }
 
+.page-title {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: -0.3px;
+}
+
 /* ── Toolbar ── */
 .toolbar {
   display: flex;
@@ -362,12 +370,6 @@ body {
 }
 
 .group-toggle:hover { border-color: #ccc; color: var(--text); }
-
-.group-toggle.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: #fff5f0;
-}
 
 /* ── Domain groups ── */
 .domain-group {
