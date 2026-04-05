@@ -419,6 +419,7 @@ export default function App() {
 
   const [collMenuOpen, setCollMenuOpen] = useState(false);
   const collMenuRef = useRef<HTMLDivElement>(null);
+  const [renamingTitle, setRenamingTitle] = useState(false);
   const [breadcrumbDropdown, setBreadcrumbDropdown] = useState<number | null>(null);
   const breadcrumbDropdownRef = useRef<HTMLSpanElement>(null);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
@@ -521,7 +522,22 @@ export default function App() {
         })()}
         <div className="page-header">
           <h2 className="page-title">
-            {filterCollection && collections.find(c => c.id === filterCollection)
+            {renamingTitle && filterCollection ? (
+              <span className="page-title-wrap">
+                <span className="page-title-measure">{renameValue || " "}</span>
+                <input
+                  className="page-title-input"
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && renameValue.trim()) { api.renameCollection(filterCollection, renameValue.trim()).then(load); setRenamingTitle(false); }
+                    if (e.key === "Escape") setRenamingTitle(false);
+                  }}
+                  onBlur={() => { if (renameValue.trim()) { api.renameCollection(filterCollection, renameValue.trim()).then(load); } setRenamingTitle(false); }}
+                  autoFocus
+                />
+              </span>
+            ) : filterCollection && collections.find(c => c.id === filterCollection)
               ? collections.find(c => c.id === filterCollection)!.name
               : "All"}
           </h2>
@@ -536,6 +552,11 @@ export default function App() {
               </button>
               {collMenuOpen && (
                 <div className="card-menu-dropdown">
+                  <button onClick={() => {
+                    setCollMenuOpen(false);
+                    const coll = collections.find(c => c.id === filterCollection);
+                    if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
+                  }}>Rename</button>
                   <button className="danger" onClick={() => {
                     if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
                       api.deleteCollection(filterCollection);
