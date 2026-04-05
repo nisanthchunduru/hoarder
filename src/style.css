@@ -204,7 +204,7 @@ body {
   flex: 1;
   max-width: 720px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 20px 24px;
 }
 
 @media (min-width: 1200px) {
@@ -263,6 +263,28 @@ body {
   align-items: center;
   gap: 2px;
   margin-bottom: 16px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.breadcrumb-item {
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.1s;
+}
+
+.breadcrumb-item:hover { color: var(--accent); }
+.breadcrumb-item.active { color: var(--text); cursor: default; }
+
+.breadcrumb-sep {
+  color: var(--muted);
+  margin: 0 5px;
 }
 
 .page-header .page-title {

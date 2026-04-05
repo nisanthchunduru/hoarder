@@ -446,6 +446,25 @@ export default function App() {
       </div>
 
       <main className="main">
+        {filterCollection && (() => {
+          const crumbs: Collection[] = [];
+          let cur = collections.find(c => c.id === filterCollection);
+          while (cur) {
+            crumbs.unshift(cur);
+            cur = collections.find(c => c.id === cur!.parent_id);
+          }
+          return crumbs.length > 0 && (
+            <nav className="breadcrumb">
+              <span className="breadcrumb-item" onClick={() => setFilterCollection(undefined)}>All</span>
+              {crumbs.map(c => (
+                <span key={c.id}>
+                  <span className="breadcrumb-sep">›</span>
+                  <span className={`breadcrumb-item${c.id === filterCollection ? " active" : ""}`} onClick={() => setFilterCollection(c.id)}>{c.name}</span>
+                </span>
+              ))}
+            </nav>
+          );
+        })()}
         <div className="page-header">
           <h2 className="page-title">
             {filterCollection && collections.find(c => c.id === filterCollection)
