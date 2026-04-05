@@ -450,7 +450,7 @@ export default function App() {
     <div className="layout">
       <div className="sidebar-wrapper" style={{ width: sidebarWidth, position: "relative", flexShrink: 0 }}>
         <aside className="sidebar">
-        <h1 className="sidebar-logo">Hoarder</h1>
+        <h1 className="sidebar-logo">Hoarder <span className="beta-badge">beta</span></h1>
         <nav className="sidebar-nav">
           <span className="sidebar-label">Collections</span>
           <div className="sidebar-item-row">

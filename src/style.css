@@ -65,6 +65,16 @@ body {
   font-weight: 700;
   letter-spacing: -0.5px;
   padding: 0 20px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.beta-badge {
+  font-family: "Caveat", cursive;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--accent);
 }
 
 .sidebar-nav {
