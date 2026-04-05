@@ -258,6 +258,17 @@ body {
   letter-spacing: -0.3px;
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.page-header .page-title {
+  margin-bottom: 0;
+}
+
 /* ── Toolbar ── */
 .toolbar {
   display: flex;
@@ -765,24 +776,22 @@ body {
 }
 
 .card-menu-trigger {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  border: 1.5px solid transparent;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   background: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  transition: all 0.15s;
+  transition: color 0.15s;
 }
 
 .card-menu-trigger:hover,
 .card-menu:has(.card-menu-dropdown) .card-menu-trigger {
-  border-color: var(--border);
-  background: var(--bg);
   color: var(--text);
 }
 

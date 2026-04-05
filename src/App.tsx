@@ -224,9 +224,9 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
     <div className="card-menu" ref={ref}>
       <button className="card-menu-trigger" onClick={() => { setOpen(!open); }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="4" r="1.2" fill="currentColor"/>
+          <circle cx="4" cy="8" r="1.2" fill="currentColor"/>
           <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
-          <circle cx="8" cy="12" r="1.2" fill="currentColor"/>
+          <circle cx="12" cy="8" r="1.2" fill="currentColor"/>
         </svg>
       </button>
       {open && (
@@ -396,6 +396,16 @@ export default function App() {
     document.addEventListener("mouseup", onUp);
   };
 
+  const [collMenuOpen, setCollMenuOpen] = useState(false);
+  const collMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!collMenuOpen) return;
+    const close = (e: MouseEvent) => { if (collMenuRef.current && !collMenuRef.current.contains(e.target as Node)) setCollMenuOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [collMenuOpen]);
+
   return (
     <div className="layout">
       <div className="sidebar-wrapper" style={{ width: sidebarWidth, position: "relative", flexShrink: 0 }}>
@@ -436,11 +446,36 @@ export default function App() {
       </div>
 
       <main className="main">
-        <h2 className="page-title">
-          {filterCollection && collections.find(c => c.id === filterCollection)
-            ? collections.find(c => c.id === filterCollection)!.name
-            : "All"}
-        </h2>
+        <div className="page-header">
+          <h2 className="page-title">
+            {filterCollection && collections.find(c => c.id === filterCollection)
+              ? collections.find(c => c.id === filterCollection)!.name
+              : "All"}
+          </h2>
+          {filterCollection && (
+            <div className="card-menu" ref={collMenuRef}>
+              <button className="card-menu-trigger" onClick={() => setCollMenuOpen(!collMenuOpen)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="4" cy="8" r="1.2" fill="currentColor"/>
+                  <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+                  <circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+                </svg>
+              </button>
+              {collMenuOpen && (
+                <div className="card-menu-dropdown">
+                  <button className="danger" onClick={() => {
+                    if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
+                      api.deleteCollection(filterCollection);
+                      setFilterCollection(undefined);
+                      setCollMenuOpen(false);
+                      load();
+                    }
+                  }}>Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <form onSubmit={handleAdd} className="add-bar">
           <input type="url" placeholder="Paste a link" value={url} onChange={e => setUrl(e.target.value)} required />
           <button disabled={saving}>{saving ? "Adding…" : "Add"}</button>

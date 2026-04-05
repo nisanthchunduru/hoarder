@@ -165,7 +165,7 @@ app.post("/api/collections", (req, res) => {
 });
 
 app.delete("/api/collections/:id", (req, res) => {
-  db.prepare("UPDATE links SET collection_id = NULL WHERE collection_id = ?").run(req.params.id);
+  db.prepare("DELETE FROM links WHERE collection_id = ?").run(req.params.id);
   db.prepare("DELETE FROM collections WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
