@@ -398,6 +398,8 @@ export default function App() {
 
   const [collMenuOpen, setCollMenuOpen] = useState(false);
   const collMenuRef = useRef<HTMLDivElement>(null);
+  const [breadcrumbDropdown, setBreadcrumbDropdown] = useState<number | null>(null);
+  const breadcrumbDropdownRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!collMenuOpen) return;
@@ -405,6 +407,13 @@ export default function App() {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [collMenuOpen]);
+
+  useEffect(() => {
+    if (breadcrumbDropdown === null) return;
+    const close = (e: MouseEvent) => { if (breadcrumbDropdownRef.current && !breadcrumbDropdownRef.current.contains(e.target as Node)) setBreadcrumbDropdown(null); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [breadcrumbDropdown]);
 
   return (
     <div className="layout">
@@ -456,12 +465,25 @@ export default function App() {
           return crumbs.length > 0 && (
             <nav className="breadcrumb">
               <span className="breadcrumb-item" onClick={() => setFilterCollection(undefined)}>All</span>
-              {crumbs.map(c => (
-                <span key={c.id}>
-                  <span className="breadcrumb-sep">›</span>
-                  <span className={`breadcrumb-item${c.id === filterCollection ? " active" : ""}`} onClick={() => setFilterCollection(c.id)}>{c.name}</span>
-                </span>
-              ))}
+              {crumbs.map((c, i) => {
+                const parentId = i === 0 ? null : crumbs[i - 1].id;
+                const siblings = collections.filter(s => (s.parent_id ?? null) === (parentId ?? null));
+                return (
+                  <span key={c.id}>
+                    <span className="breadcrumb-sep-wrap" ref={breadcrumbDropdown === c.id ? breadcrumbDropdownRef : undefined}>
+                      <span className="breadcrumb-sep" onClick={() => setBreadcrumbDropdown(breadcrumbDropdown === c.id ? null : c.id)}>›</span>
+                      {breadcrumbDropdown === c.id && siblings.length > 1 && (
+                        <div className="breadcrumb-dropdown">
+                          {siblings.map(s => (
+                            <button key={s.id} className={s.id === c.id ? "active" : ""} onClick={() => { setFilterCollection(s.id); setBreadcrumbDropdown(null); }}>{s.name}</button>
+                          ))}
+                        </div>
+                      )}
+                    </span>
+                    <span className={`breadcrumb-item${c.id === filterCollection ? " active" : ""}`} onClick={() => setFilterCollection(c.id)}>{c.name}</span>
+                  </span>
+                );
+              })}
             </nav>
           );
         })()}
