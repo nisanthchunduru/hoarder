@@ -62,10 +62,9 @@ and visit [http://localhost:5173](http://localhost:5173)
 - React
 - Vite
 
-### Backend
+### Storage
 
-- Express
-- better-sqlite3
+- IndexedDB (browser-native, no server required)
 
 ### Languages
 

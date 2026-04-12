@@ -33,30 +33,21 @@ function tagColor(name: string) {
   return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
 }
 
-const api = {
-  get: (q: string, archived: number, tag?: string, collectionId?: number) =>
-    fetch(`/api/links?archived=${archived}&q=${encodeURIComponent(q)}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}${collectionId ? `&collection_id=${collectionId}` : ""}`).then(r => r.json()),
-  add: (url: string) =>
-    fetch("/api/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).then(async r => {
-      const data = await r.json();
-      if (r.status === 409) return { ...data.link, _duplicate: true };
-      return data;
-    }),
-  setTags: (id: number, tags: string[]) =>
-    fetch(`/api/links/${id}/tags`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags }) }).then(r => r.json()),
-  setCollection: (id: number, collection_id: number | null) =>
-    fetch(`/api/links/${id}/collection`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection_id }) }),
-  archive: (id: number) => fetch(`/api/links/${id}/archive`, { method: "PATCH" }),
-  delete: (id: number) => fetch(`/api/links/${id}`, { method: "DELETE" }),
-  tags: () => fetch("/api/tags").then(r => r.json()),
-  collections: () => fetch("/api/collections").then(r => r.json()),
-  createCollection: (name: string, parent_id?: number) =>
-    fetch("/api/collections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, parent_id }) }).then(r => r.json()),
-  deleteCollection: (id: number) => fetch(`/api/collections/${id}`, { method: "DELETE" }),
-  moveCollection: (id: number, parent_id: number | null) =>
-    fetch(`/api/collections/${id}/parent`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ parent_id }) }),
-  renameCollection: (id: number, name: string) =>
-    fetch(`/api/collections/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }),
+import * as db from "./db";
+
+const actions = {
+  getLinks: db.getLinks,
+  addLink: db.addLink,
+  setTags: db.setLinkTags,
+  setCollection: (id: number, collection_id: number | null) => db.setLinkCollection(id, collection_id),
+  archiveLink: db.toggleArchive,
+  deleteLink: db.deleteLink,
+  tags: db.getTags,
+  collections: db.getCollections,
+  createCollection: db.createCollection,
+  deleteCollection: db.deleteCollection,
+  moveCollection: db.moveCollection,
+  renameCollection: db.renameCollection,
 };
 
 function hostname(url: string) {
@@ -103,7 +94,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
     if (t && !tags.includes(t)) {
       const next = [...tags, t];
       setTags(next);
-      api.setTags(link.id, next).then(onUpdate);
+      actions.setTags(link.id, next).then(onUpdate);
     }
     setInput("");
     inputRef.current?.focus();
@@ -112,7 +103,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
   const removeTag = (t: string) => {
     const next = tags.filter(x => x !== t);
     setTags(next);
-    api.setTags(link.id, next).then(onUpdate);
+    actions.setTags(link.id, next).then(onUpdate);
   };
 
   const cancel = () => { setTags(link.tags); setEditing(false); setInput(""); };
@@ -138,7 +129,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
     const quickRemove = (t: string) => {
       const next = link.tags.filter(x => x !== t);
       setTags(next);
-      api.setTags(link.id, next).then(onUpdate);
+      actions.setTags(link.id, next).then(onUpdate);
     };
     return (
       <div className="tag-row">
@@ -231,10 +222,10 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
       </button>
       {open && (
         <div className="card-menu-dropdown">
-          <button onClick={() => { api.archive(link.id).then(onUpdate); setOpen(false); }}>
+          <button onClick={() => { actions.archiveLink(link.id).then(onUpdate); setOpen(false); }}>
             {link.archived ? "Unarchive" : "Archive"}
           </button>
-          <button className="danger" onClick={() => { api.delete(link.id).then(onUpdate); setOpen(false); }}>
+          <button className="danger" onClick={() => { actions.deleteLink(link.id).then(onUpdate); setOpen(false); }}>
             Delete
           </button>
         </div>
@@ -284,7 +275,7 @@ export default function App() {
   }, [tab, filterCollection, filterTags]);
 
   const load = useCallback(() => {
-    api.get(search, tab === "archived" ? 1 : 0, undefined, filterCollection).then((data: Link[]) => {
+    actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection).then((data: Link[]) => {
       setAllLinks(data);
       if (filterTags.length) {
         setLinks(data.filter(l => filterTags.some(t => l.tags.includes(t))));
@@ -292,8 +283,8 @@ export default function App() {
         setLinks(data);
       }
     });
-    api.tags().then(setAllTags);
-    api.collections().then(setCollections);
+    actions.tags().then(setAllTags);
+    actions.collections().then(setCollections);
   }, [search, tab, filterTags, filterCollection]);
 
   useEffect(() => { load(); }, [load]);
@@ -302,8 +293,8 @@ export default function App() {
     e.preventDefault();
     if (!url.trim()) return;
     setSaving(true);
-    const link = await api.add(url.trim());
-    if (filterCollection) await api.setCollection(link.id, filterCollection);
+    const link = await actions.addLink(url.trim());
+    if (filterCollection) await actions.setCollection(link.id, filterCollection);
     setUrl("");
     setSaving(false);
     load();
@@ -312,7 +303,7 @@ export default function App() {
   const handleNewCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollection.trim()) return;
-    await api.createCollection(newCollection.trim(), newCollectionParent || undefined);
+    await actions.createCollection(newCollection.trim(), newCollectionParent || undefined);
     setNewCollection("");
     setShowNewCollection(false);
     setNewCollectionParent(null);
@@ -335,9 +326,9 @@ export default function App() {
     const linkId = e.dataTransfer.getData("text/link-id");
     const collId = e.dataTransfer.getData("text/collection-id");
     if (linkId) {
-      api.setCollection(+linkId, targetCollectionId).then(load);
+      actions.setCollection(+linkId, targetCollectionId).then(load);
     } else if (collId && +collId !== targetCollectionId) {
-      api.moveCollection(+collId, targetCollectionId).then(load);
+      actions.moveCollection(+collId, targetCollectionId).then(load);
     }
   };
 
@@ -373,10 +364,10 @@ export default function App() {
                 value={renameValue}
                 onChange={e => setRenameValue(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && renameValue.trim()) { api.renameCollection(c.id, renameValue.trim()).then(load); setRenamingId(null); }
+                  if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(c.id, renameValue.trim()).then(load); setRenamingId(null); }
                   if (e.key === "Escape") setRenamingId(null);
                 }}
-                onBlur={() => { if (renameValue.trim() && renameValue !== c.name) { api.renameCollection(c.id, renameValue.trim()).then(load); } setRenamingId(null); }}
+                onBlur={() => { if (renameValue.trim() && renameValue !== c.name) { actions.renameCollection(c.id, renameValue.trim()).then(load); } setRenamingId(null); }}
                 onClick={e => e.stopPropagation()}
                 autoFocus
               />
@@ -420,6 +411,8 @@ export default function App() {
   const [collMenuOpen, setCollMenuOpen] = useState(false);
   const collMenuRef = useRef<HTMLDivElement>(null);
   const [renamingTitle, setRenamingTitle] = useState(false);
+  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
+  const logoMenuRef = useRef<HTMLDivElement>(null);
   const [breadcrumbDropdown, setBreadcrumbDropdown] = useState<number | null>(null);
   const breadcrumbDropdownRef = useRef<HTMLSpanElement>(null);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
@@ -431,6 +424,13 @@ export default function App() {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [collMenuOpen]);
+
+  useEffect(() => {
+    if (!logoMenuOpen) return;
+    const close = (e: MouseEvent) => { if (logoMenuRef.current && !logoMenuRef.current.contains(e.target as Node)) setLogoMenuOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [logoMenuOpen]);
 
   useEffect(() => {
     if (breadcrumbDropdown === null) return;
@@ -448,9 +448,49 @@ export default function App() {
 
   return (
     <div className="layout">
-      <div className="sidebar-wrapper" style={{ width: sidebarWidth, position: "relative", flexShrink: 0 }}>
+      <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
+        <div className="sidebar-logo-row">
+          <h1 className="sidebar-logo">Hoarder <span className="beta-badge">beta</span></h1>
+          <div className="card-menu" ref={logoMenuRef}>
+            <button className="card-menu-trigger" onClick={() => setLogoMenuOpen(!logoMenuOpen)}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="4" cy="8" r="1.2" fill="currentColor"/>
+                <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+                <circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+              </svg>
+            </button>
+            {logoMenuOpen && (
+              <div className="card-menu-dropdown logo-menu-dropdown">
+                <button onClick={async () => {
+                  const json = await db.exportData();
+                  const blob = new Blob([json], { type: "application/json" });
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = "hoarder.json";
+                  a.click();
+                  setLogoMenuOpen(false);
+                }}>Export data</button>
+                <button onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = ".json";
+                  input.onchange = async () => {
+                    const file = input.files?.[0];
+                    if (!file) return;
+                    const json = await file.text();
+                    if (window.confirm("Importing data will replace all existing data. Continue?")) {
+                      await db.importData(json);
+                      load();
+                    }
+                  };
+                  input.click();
+                  setLogoMenuOpen(false);
+                }}>Import data</button>
+              </div>
+            )}
+          </div>
+        </div>
         <aside className="sidebar">
-        <h1 className="sidebar-logo">Hoarder <span className="beta-badge">beta</span></h1>
         <nav className="sidebar-nav">
           <span className="sidebar-label">Collections</span>
           <div className="sidebar-item-row">
@@ -530,10 +570,10 @@ export default function App() {
                   value={renameValue}
                   onChange={e => setRenameValue(e.target.value)}
                   onKeyDown={e => {
-                    if (e.key === "Enter" && renameValue.trim()) { api.renameCollection(filterCollection, renameValue.trim()).then(load); setRenamingTitle(false); }
+                    if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()).then(load); setRenamingTitle(false); }
                     if (e.key === "Escape") setRenamingTitle(false);
                   }}
-                  onBlur={() => { if (renameValue.trim()) { api.renameCollection(filterCollection, renameValue.trim()).then(load); } setRenamingTitle(false); }}
+                  onBlur={() => { if (renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()).then(load); } setRenamingTitle(false); }}
                   autoFocus
                 />
               </span>
@@ -559,7 +599,7 @@ export default function App() {
                   }}>Rename</button>
                   <button className="danger" onClick={() => {
                     if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
-                      api.deleteCollection(filterCollection);
+                      actions.deleteCollection(filterCollection);
                       setFilterCollection(undefined);
                       setCollMenuOpen(false);
                       load();
@@ -632,7 +672,7 @@ export default function App() {
 
         {links.length === 0 ? (
           <p className="empty">
-            {search || filterTags.length || filterCollection ? "No matches." : tab === "unread" ? "Nothing saved yet — paste a link above!" : "Archive is empty."}
+            {search || filterTags.length || filterCollection ? "No matches." : tab === "unread" ? "No links added yet — add a link above!" : "Archive is empty."}
           </p>
         ) : (() => {
           const renderCard = (l: Link) => (
