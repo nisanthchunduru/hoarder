@@ -1,8 +1,8 @@
 # Hoarder
 
-A self hostable, privacy focused and beautifuI Read It Later app
+Privacy-focused read-it-later app
 
-Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar services
+Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar read-it-later services
 
 ## Setup
 
@@ -29,10 +29,39 @@ npm run dev
 
 and visit [http://localhost:5173](http://localhost:5173)
 
-## TODOs
+### Building Chrome & Firefox extension
 
-- Release as a Chrome extension, a macOS app, or both
-- If released as a Chrome extension, offer an option to store data locally for guaranteed privacy
+Hoarder can also be installed as a Chrome or Firefox extension. To do so, build the extension
+
+```bash
+npm run build-ext
+```
+
+`build-ext` NPM script compiles TypeScript/React files (using Vite) to `extension/`
+
+Then, follow the steps below
+
+#### Chrome
+
+1. Open Chrome and visit `chrome://extensions`
+2. Enable "Developer mode"
+3. Click "Load unpacked" and select the `extension/` folder
+
+#### Firefox
+
+1. Open Firefox and visit `about:debugging`
+2. Click "This Firefox"
+3. Click "Load Temporary Add-on" and select `extension/manifest.json`
+
+### Build extension zip
+
+If you'd like zip the extension after building, run
+
+```bash
+npm run zip-ext
+```
+
+`zip-ext` NPM script creates an `extension.zip` file in `build/`
 
 ## Features
 
@@ -64,11 +93,15 @@ and visit [http://localhost:5173](http://localhost:5173)
 
 ### Storage
 
-- IndexedDB (browser-native, no server required)
+- IndexedDB
 
 ### Languages
 
 - TypeScript
+
+## TODOs
+
+- Release as a Chrome/Firefox extension, a macOS app, or both
 
 ## Credits
 

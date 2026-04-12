@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Hoarder",
+  "version": "0.1.0",
+  "description": "Privacy-focused open source read-it-later app",
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_icon": "icon-128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{b458ea75-0121-4d72-bb95-a8d8e3993d41}",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "permissions": []
+}

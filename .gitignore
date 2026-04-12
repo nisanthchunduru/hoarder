@@ -1,3 +1,6 @@
 node_modules
 dist
-db/
+build
+extension/assets
+extension/index.html
+extension/favicon.svg

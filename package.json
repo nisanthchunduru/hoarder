@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "build-ext": "node scripts/build-extension.js",
+    "zip-ext": "mkdir -p build && cd extension && zip -r ../build/extension.zip ."
   },
   "dependencies": {
     "react": "^18.3.1",
