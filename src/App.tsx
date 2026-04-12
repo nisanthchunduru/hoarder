@@ -597,9 +597,9 @@ export default function App() {
                     const coll = collections.find(c => c.id === filterCollection);
                     if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
                   }}>Rename</button>
-                  <button className="danger" onClick={() => {
+                  <button className="danger" onClick={async () => {
                     if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
-                      actions.deleteCollection(filterCollection);
+                      await actions.deleteCollection(filterCollection);
                       setFilterCollection(undefined);
                       setCollMenuOpen(false);
                       load();
