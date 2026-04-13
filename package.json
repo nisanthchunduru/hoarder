@@ -5,7 +5,9 @@
     "dev": "vite",
     "build": "vite build",
     "build-ext": "node scripts/build-extension.js",
-    "zip-ext": "mkdir -p build && cd extension && zip -r ../build/extension.zip ."
+    "zip-ext": "mkdir -p build && cd extension && zip -r ../build/extension.zip .",
+    "build-and-zip-ext": "npm run build-ext && npm run zip-ext",
+    "zip-ext-src": "mkdir -p build && zip -r build/extension-source.zip src public scripts index.html package.json package-lock.json tsconfig.json vite.config.ts README.md"
   },
   "dependencies": {
     "dexie": "^4.4.2",
