@@ -3,16 +3,16 @@ import {
   getLink, getLinks, createLink, getLinkByUrl, updateLink, deleteLink, getTags,
   getCollections, createCollection, updateCollection,
 } from "./db-actions";
-import { LinkRecord, CollectionRecord } from "./interfaces";
+import { Link, Collection } from "./interfaces";
 
 // ── Helpers ──
 
-function getCollectionLinks(allLinks: LinkRecord[], collectionIds: Set<number>): LinkRecord[] {
+function getCollectionLinks(allLinks: Link[], collectionIds: Set<number>): Link[] {
   return allLinks.filter(l => l.collection_id && collectionIds.has(l.collection_id));
 }
 
-function getDescendantCollections(allCollections: CollectionRecord[], parentId: number): CollectionRecord[] {
-  const result: CollectionRecord[] = [];
+function getDescendantCollections(allCollections: Collection[], parentId: number): Collection[] {
+  const result: Collection[] = [];
   for (const c of allCollections) {
     if (c.parent_id === parentId && c.id) {
       result.push(c);
@@ -22,35 +22,43 @@ function getDescendantCollections(allCollections: CollectionRecord[], parentId: 
   return result;
 }
 
-// ── Actions ──
+// ── Link Actions ──
 
-async function setLinkTags(id: number, tags: string[]): Promise<LinkRecord> {
+export async function createLinkIfNotExists(url: string): Promise<Link & { _duplicate?: boolean }> {
+  const existing = await getLinkByUrl(url);
+  if (existing) return { ...existing, _duplicate: true };
+  return createLink(url);
+}
+
+export async function setLinkTags(id: number, tags: string[]): Promise<Link> {
   return updateLink(id, { tags });
 }
 
-async function setLinkCollection(id: number, collectionId: number | null): Promise<void> {
+export async function setLinkCollection(id: number, collectionId: number | null): Promise<void> {
   await updateLink(id, { collection_id: collectionId });
 }
 
-async function toggleArchive(id: number): Promise<void> {
+export async function toggleArchive(id: number): Promise<void> {
   const link = await getLink(id);
   await updateLink(id, { archived: link.archived ? 0 : 1 });
 }
 
-async function moveCollection(id: number, parentId: number | null): Promise<void> {
+// ── Collection Actions ──
+
+export async function moveCollection(id: number, parentId: number | null): Promise<void> {
   await updateCollection(id, { parent_id: parentId });
 }
 
-async function renameCollection(id: number, name: string): Promise<void> {
+export async function renameCollection(id: number, name: string): Promise<void> {
   await updateCollection(id, { name: name.trim() });
 }
 
-async function deleteCollectionAndDescendants(id: number): Promise<void> {
+export async function deleteCollectionAndDescendants(id: number): Promise<void> {
   const allCollections = await db.collections.toArray();
   const allLinks = await db.links.toArray();
 
   const descendants = getDescendantCollections(allCollections, id);
-  const collectionsToDelete = [...descendants, { id } as CollectionRecord];
+  const collectionsToDelete = [...descendants, { id } as Collection];
   const collectionIds = new Set(collectionsToDelete.map(c => c.id!));
   collectionIds.add(id);
   const linksToDelete = getCollectionLinks(allLinks, collectionIds);
@@ -59,11 +67,7 @@ async function deleteCollectionAndDescendants(id: number): Promise<void> {
   await db.collections.bulkDelete([...collectionIds]);
 }
 
-async function createLinkIfNotExists(url: string): Promise<LinkRecord & { _duplicate?: boolean }> {
-  const existing = await getLinkByUrl(url);
-  if (existing) return { ...existing, _duplicate: true };
-  return createLink(url);
-}
+// ── Bundled actions for components ──
 
 const actions = {
   getLinks,

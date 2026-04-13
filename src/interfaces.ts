@@ -1,4 +1,4 @@
-export interface LinkRecord {
+export interface Link {
   id?: number;
   url: string;
   title: string;
@@ -9,9 +9,16 @@ export interface LinkRecord {
   tags: string[];
 }
 
-export interface CollectionRecord {
+export interface Collection {
   id?: number;
   name: string;
   parent_id: number | null;
   created_at: string;
 }
+
+export interface TagCount {
+  name: string;
+  count: number;
+}
+
+export type Tab = "unread" | "archived";

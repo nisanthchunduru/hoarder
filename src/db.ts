@@ -1,9 +1,9 @@
 import Dexie, { type Table } from "dexie";
-import { LinkRecord, CollectionRecord } from "./interfaces";
+import { Link, Collection } from "./interfaces";
 
 class HoarderDB extends Dexie {
-  links!: Table<LinkRecord, number>;
-  collections!: Table<CollectionRecord, number>;
+  links!: Table<Link, number>;
+  collections!: Table<Collection, number>;
 
   constructor() {
     super("hoarder");
