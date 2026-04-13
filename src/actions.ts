@@ -1,24 +1,11 @@
+import db from "./db";
 import {
-  getAll, getBy, getLink, getLinks, createLink, updateLink, deleteLink, getTags,
+  getLink, getLinks, createLink, getLinkByUrl, updateLink, deleteLink, getTags,
   getCollections, createCollection, updateCollection,
 } from "./db-actions";
-import { tx } from "./db";
 import { LinkRecord, CollectionRecord } from "./interfaces";
 
 // ── Helpers ──
-
-function deleteEntities(storeName: string, items: ({ id?: number } | number)[]): Promise<void> {
-  const ids = new Set(items.map(i => typeof i === "number" ? i : i.id!));
-  return tx(storeName, "readwrite", (s) => { for (const id of ids) s[storeName].delete(id); });
-}
-
-function deleteLinks(items: (LinkRecord | number)[]): Promise<void> {
-  return deleteEntities("links", items);
-}
-
-function deleteCollections(items: (CollectionRecord | number)[]): Promise<void> {
-  return deleteEntities("collections", items);
-}
 
 function getCollectionLinks(allLinks: LinkRecord[], collectionIds: Set<number>): LinkRecord[] {
   return allLinks.filter(l => l.collection_id && collectionIds.has(l.collection_id));
@@ -59,33 +46,35 @@ async function renameCollection(id: number, name: string): Promise<void> {
 }
 
 async function deleteCollectionAndDescendants(id: number): Promise<void> {
-  const allCollections = await getAll<CollectionRecord>("collections");
-  const allLinks = await getAll<LinkRecord>("links");
+  const allCollections = await db.collections.toArray();
+  const allLinks = await db.links.toArray();
 
   const descendants = getDescendantCollections(allCollections, id);
-  const collectionsToDelete = [...descendants, id];
-  const collectionIds = new Set(collectionsToDelete.map(c => typeof c === "number" ? c : c.id!));
+  const collectionsToDelete = [...descendants, { id } as CollectionRecord];
+  const collectionIds = new Set(collectionsToDelete.map(c => c.id!));
+  collectionIds.add(id);
   const linksToDelete = getCollectionLinks(allLinks, collectionIds);
-  await deleteLinks(linksToDelete);
-  await deleteCollections(collectionsToDelete);
+
+  await db.links.bulkDelete(linksToDelete.map(l => l.id!));
+  await db.collections.bulkDelete([...collectionIds]);
 }
 
 async function createLinkIfNotExists(url: string): Promise<LinkRecord & { _duplicate?: boolean }> {
-  const existing = await getBy<LinkRecord>("links", "url", url);
+  const existing = await getLinkByUrl(url);
   if (existing) return { ...existing, _duplicate: true };
   return createLink(url);
 }
 
 const actions = {
-  getLinks: getLinks,
+  getLinks,
   addLink: createLinkIfNotExists,
   setTags: setLinkTags,
   setCollection: setLinkCollection,
   archiveLink: toggleArchive,
-  deleteLink: deleteLink,
+  deleteLink,
   tags: getTags,
   collections: getCollections,
-  createCollection: createCollection,
+  createCollection,
   deleteCollection: deleteCollectionAndDescendants,
   moveCollection,
   renameCollection,

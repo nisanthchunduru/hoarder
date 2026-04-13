@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import db from "../db";
 import "../style.css";
 
 interface Link {
@@ -62,7 +64,7 @@ function Chip({ name, onRemove }: { name: string; onRemove?: () => void }) {
   );
 }
 
-function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; onUpdate: () => void }) {
+function LinkTags({ link, allTags }: { link: Link; allTags: string[] }) {
   const [editing, setEditing] = useState(false);
   const [tags, setTags] = useState(link.tags);
   const [input, setInput] = useState("");
@@ -81,7 +83,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
     if (t && !tags.includes(t)) {
       const next = [...tags, t];
       setTags(next);
-      actions.setTags(link.id, next).then(onUpdate);
+      actions.setTags(link.id, next);
     }
     setInput("");
     inputRef.current?.focus();
@@ -90,7 +92,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
   const removeTag = (t: string) => {
     const next = tags.filter(x => x !== t);
     setTags(next);
-    actions.setTags(link.id, next).then(onUpdate);
+    actions.setTags(link.id, next);
   };
 
   const cancel = () => { setTags(link.tags); setEditing(false); setInput(""); };
@@ -116,7 +118,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
     const quickRemove = (t: string) => {
       const next = link.tags.filter(x => x !== t);
       setTags(next);
-      actions.setTags(link.id, next).then(onUpdate);
+      actions.setTags(link.id, next);
     };
     return (
       <div className="tag-row">
@@ -187,7 +189,7 @@ function LinkTags({ link, allTags, onUpdate }: { link: Link; allTags: string[]; 
   );
 }
 
-function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
+function CardMenu({ link }: { link: Link }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -209,10 +211,10 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
       </button>
       {open && (
         <div className="card-menu-dropdown">
-          <button onClick={() => { actions.archiveLink(link.id).then(onUpdate); setOpen(false); }}>
+          <button onClick={() => { actions.archiveLink(link.id); setOpen(false); }}>
             {link.archived ? "Unarchive" : "Archive"}
           </button>
-          <button className="danger" onClick={() => { actions.deleteLink(link.id).then(onUpdate); setOpen(false); }}>
+          <button className="danger" onClick={() => { actions.deleteLink(link.id); setOpen(false); }}>
             Delete
           </button>
         </div>
@@ -223,10 +225,6 @@ function CardMenu({ link, onUpdate }: { link: Link; onUpdate: () => void }) {
 
 export default function App() {
   const params = new URLSearchParams(window.location.search);
-  const [links, setLinks] = useState<Link[]>([]);
-  const [allLinks, setAllLinks] = useState<Link[]>([]);
-  const [allTags, setAllTags] = useState<TagCount[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
   const [tab, setTab] = useState<Tab>((params.get("tab") as Tab) || "unread");
   const [search, setSearch] = useState("");
   const [filterTags, setFilterTags] = useState<string[]>(() => {
@@ -261,20 +259,17 @@ export default function App() {
     window.history.replaceState(null, "", qs ? `?${qs}` : "/");
   }, [tab, filterCollection, filterTags]);
 
-  const load = useCallback(() => {
-    actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection).then((data: Link[]) => {
-      setAllLinks(data);
-      if (filterTags.length) {
-        setLinks(data.filter(l => filterTags.some(t => l.tags.includes(t))));
-      } else {
-        setLinks(data);
-      }
-    });
-    actions.tags().then(setAllTags);
-    actions.collections().then(setCollections);
-  }, [search, tab, filterTags, filterCollection]);
+  const allLinks = useLiveQuery(
+    () => actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection),
+    [search, tab, filterCollection]
+  ) ?? [];
 
-  useEffect(() => { load(); }, [load]);
+  const links = filterTags.length
+    ? allLinks.filter(l => filterTags.some(t => l.tags.includes(t)))
+    : allLinks;
+
+  const allTags = useLiveQuery(() => actions.tags(), []) ?? [];
+  const collections = useLiveQuery(() => actions.collections(), []) ?? [];
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,7 +279,6 @@ export default function App() {
     if (filterCollection) await actions.setCollection(link.id, filterCollection);
     setUrl("");
     setSaving(false);
-    load();
   };
 
   const handleNewCollection = async (e: React.FormEvent) => {
@@ -294,7 +288,6 @@ export default function App() {
     setNewCollection("");
     setShowNewCollection(false);
     setNewCollectionParent(null);
-    load();
   };
 
   const startNewCollection = (parentId: number | null = null) => {
@@ -313,9 +306,9 @@ export default function App() {
     const linkId = e.dataTransfer.getData("text/link-id");
     const collId = e.dataTransfer.getData("text/collection-id");
     if (linkId) {
-      actions.setCollection(+linkId, targetCollectionId).then(load);
+      actions.setCollection(+linkId, targetCollectionId);
     } else if (collId && +collId !== targetCollectionId) {
-      actions.moveCollection(+collId, targetCollectionId).then(load);
+      actions.moveCollection(+collId, targetCollectionId);
     }
   };
 
@@ -351,10 +344,10 @@ export default function App() {
                 value={renameValue}
                 onChange={e => setRenameValue(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(c.id, renameValue.trim()).then(load); setRenamingId(null); }
+                  if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(c.id, renameValue.trim()); setRenamingId(null); }
                   if (e.key === "Escape") setRenamingId(null);
                 }}
-                onBlur={() => { if (renameValue.trim() && renameValue !== c.name) { actions.renameCollection(c.id, renameValue.trim()).then(load); } setRenamingId(null); }}
+                onBlur={() => { if (renameValue.trim() && renameValue !== c.name) { actions.renameCollection(c.id, renameValue.trim()); } setRenamingId(null); }}
                 onClick={e => e.stopPropagation()}
                 autoFocus
               />
@@ -467,7 +460,6 @@ export default function App() {
                     const json = await file.text();
                     if (window.confirm("Importing data will replace all existing data. Continue?")) {
                       await importData(json);
-                      load();
                     }
                   };
                   input.click();
@@ -557,10 +549,10 @@ export default function App() {
                   value={renameValue}
                   onChange={e => setRenameValue(e.target.value)}
                   onKeyDown={e => {
-                    if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()).then(load); setRenamingTitle(false); }
+                    if (e.key === "Enter" && renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()); setRenamingTitle(false); }
                     if (e.key === "Escape") setRenamingTitle(false);
                   }}
-                  onBlur={() => { if (renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()).then(load); } setRenamingTitle(false); }}
+                  onBlur={() => { if (renameValue.trim()) { actions.renameCollection(filterCollection, renameValue.trim()); } setRenamingTitle(false); }}
                   autoFocus
                 />
               </span>
@@ -589,7 +581,6 @@ export default function App() {
                       await actions.deleteCollection(filterCollection);
                       setFilterCollection(undefined);
                       setCollMenuOpen(false);
-                      load();
                     }
                   }}>Delete</button>
                 </div>
@@ -682,9 +673,9 @@ export default function App() {
                   </span>
                   {l.description && <span className="link-desc">{l.description}</span>}
                 </a>
-                <LinkTags link={l} allTags={allTags.map(t => t.name)} onUpdate={load} />
+                <LinkTags link={l} allTags={allTags.map(t => t.name)} />
               </div>
-              <CardMenu link={l} onUpdate={load} />
+              <CardMenu link={l} />
             </li>
           );
 
