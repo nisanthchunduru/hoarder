@@ -130,11 +130,44 @@ export async function createCollection(name: string, parentId?: number): Promise
   return { ...coll, id };
 }
 
-export async function deleteCollection(id: number): Promise<void> {
-  const links = await getAll<LinkRecord>("links");
-  const toDelete = links.filter(l => l.collection_id === id);
-  await tx("links", "readwrite", (s) => { for (const l of toDelete) s.links.delete(l.id!); });
-  await tx("collections", "readwrite", (s) => s.collections.delete(id));
+function deleteEntities(storeName: string, items: ({ id?: number } | number)[]): Promise<void> {
+  const ids = new Set(items.map(i => typeof i === "number" ? i : i.id!));
+  return tx(storeName, "readwrite", (s) => { for (const id of ids) s[storeName].delete(id); });
+}
+
+function deleteLinks(items: (LinkRecord | number)[]): Promise<void> {
+  return deleteEntities("links", items);
+}
+
+function deleteCollections(items: (CollectionRecord | number)[]): Promise<void> {
+  return deleteEntities("collections", items);
+}
+
+function getCollectionLinks(allLinks: LinkRecord[], collectionIds: Set<number>): LinkRecord[] {
+  return allLinks.filter(l => l.collection_id && collectionIds.has(l.collection_id));
+}
+
+export async function deleteCollectionAndDescendants(id: number): Promise<void> {
+  const allCollections = await getAll<CollectionRecord>("collections");
+  const allLinks = await getAll<LinkRecord>("links");
+
+  const descendants = getDescendantCollections(allCollections, id);
+  const collectionsToDelete = [...descendants, id];
+  const collectionIds = new Set(collectionsToDelete.map(c => typeof c === "number" ? c : c.id!));
+  const linksToDelete = getCollectionLinks(allLinks, collectionIds);
+  await deleteLinks(linksToDelete);
+  await deleteCollections(collectionsToDelete);
+}
+
+function getDescendantCollections(allCollections: CollectionRecord[], parentId: number): CollectionRecord[] {
+  const result: CollectionRecord[] = [];
+  for (const c of allCollections) {
+    if (c.parent_id === parentId && c.id) {
+      result.push(c);
+      result.push(...getDescendantCollections(allCollections, c.id));
+    }
+  }
+  return result;
 }
 
 export async function moveCollection(id: number, parentId: number | null): Promise<void> {

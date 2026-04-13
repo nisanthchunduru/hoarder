@@ -45,7 +45,7 @@ const actions = {
   tags: db.getTags,
   collections: db.getCollections,
   createCollection: db.createCollection,
-  deleteCollection: db.deleteCollection,
+  deleteCollection: db.deleteCollectionAndDescendants,
   moveCollection: db.moveCollection,
   renameCollection: db.renameCollection,
 };
