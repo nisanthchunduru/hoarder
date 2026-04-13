@@ -8,6 +8,8 @@ createRoot(document.getElementById("root")!).render(
     <HashRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/archived" element={<App />} />
+        <Route path="/archived/collections/:id" element={<App />} />
         <Route path="/collections/:id" element={<App />} />
       </Routes>
     </HashRouter>

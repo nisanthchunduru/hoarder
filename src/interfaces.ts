@@ -13,6 +13,7 @@ export interface Collection {
   id?: number;
   name: string;
   parent_id: number | null;
+  archived: number;
   created_at: string;
 }
 

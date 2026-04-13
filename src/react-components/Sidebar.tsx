@@ -6,9 +6,10 @@ import { exportData } from "../export";
 import { importData } from "../import";
 import { Collection } from "../interfaces";
 
-export default function Sidebar({ collections, filterCollection }: {
+export default function Sidebar({ collections, filterCollection, isArchivedSection }: {
   collections: (Collection & { id: number })[];
   filterCollection?: number;
+  isArchivedSection?: boolean;
 }) {
   const [newCollection, setNewCollection] = useState("");
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Sidebar({ collections, filterCollection }: {
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
   const [logoMenuOpen, setLogoMenuOpen] = useState(false);
 
@@ -25,7 +26,7 @@ export default function Sidebar({ collections, filterCollection }: {
 
   useEffect(() => { localStorage.setItem("sidebarWidth", String(sidebarWidth)); }, [sidebarWidth]);
 
-  const toggleCollapse = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleCollapse = (key: string | number) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
   const startNewCollection = (parentId: number | null = null) => { setNewCollectionParent(parentId); setShowNewCollection(true); };
   const cancelNewCollection = () => { setNewCollection(""); setShowNewCollection(false); setNewCollectionParent(null); };
@@ -57,26 +58,43 @@ export default function Sidebar({ collections, filterCollection }: {
     document.addEventListener("mouseup", onUp);
   };
 
-  const renderCollections = (parentId: number | null, depth: number): React.ReactNode => {
-    const children = collections.filter(c => (c.parent_id ?? null) === parentId);
+  const hasArchivedDescendant = (id: number): boolean => {
+    return collections.some(c => c.parent_id === id && (c.archived || hasArchivedDescendant(c.id!)));
+  };
+
+  const renderCollections = (parentId: number | null, depth: number, section: "active" | "archived" = "active"): React.ReactNode => {
+    const children = collections.filter(c => {
+      if ((c.parent_id ?? null) !== parentId) return false;
+      if (section === "active") return !c.archived;
+      return c.archived || hasArchivedDescendant(c.id!);
+    });
     return children.map(c => {
       const hasChildren = collections.some(ch => ch.parent_id === c.id);
-      const isCollapsed = collapsed[c.id];
+      const collapseKey = `${section}:${c.id}`;
+      const isCollapsed = collapsed[collapseKey];
       return (
         <div key={c.id}>
           <div className="sidebar-item-row" style={{ paddingLeft: 12 + depth * 16 }}>
             <button
-              className={`sidebar-item${filterCollection === c.id ? " active" : ""}`}
-              draggable={renamingId !== c.id}
-              onClick={() => { if (renamingId !== c.id) navigate(filterCollection === c.id ? "/" : `/collections/${c.id}`); }}
-              onDoubleClick={e => { e.stopPropagation(); navigate(`/collections/${c.id}`); setRenamingId(c.id); setRenameValue(c.name); }}
+              className={`sidebar-item${filterCollection === c.id && (section === "archived" === !!isArchivedSection) ? " active" : ""}${section === "archived" && !c.archived ? " context-only" : ""}`}
+              draggable={renamingId !== c.id && !(section === "archived" && !c.archived)}
+              onClick={() => {
+                if (renamingId === c.id) return;
+                const prefix = section === "archived" ? "/archived" : "";
+                navigate(filterCollection === c.id ? (section === "archived" ? "/archived" : "/") : `${prefix}/collections/${c.id}`);
+              }}
+              onDoubleClick={e => {
+                e.stopPropagation();
+                const prefix = section === "archived" ? "/archived" : "";
+                navigate(`${prefix}/collections/${c.id}`); setRenamingId(c.id!); setRenameValue(c.name);
+              }}
               onDragStart={e => { e.dataTransfer.setData("text/collection-id", String(c.id)); e.dataTransfer.effectAllowed = "move"; }}
               onDragOver={e => e.preventDefault()}
               onDragEnter={e => e.currentTarget.classList.add("drop-over")}
               onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
               onDrop={e => handleDrop(e, c.id)}
             >
-              <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(c.id); }}>
+              <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </span>
               {renamingId === c.id ? (
@@ -90,7 +108,7 @@ export default function Sidebar({ collections, filterCollection }: {
                   autoFocus
                 />
               ) : c.name}
-              <span className="sidebar-add-child" title="Add sub-collection" onClick={e => { e.stopPropagation(); startNewCollection(c.id); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
+              <span className="sidebar-add-child" title="Add sub-collection" style={section === "archived" ? { visibility: "hidden" } : undefined} onClick={e => { e.stopPropagation(); startNewCollection(c.id); }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
             </button>
           </div>
           {showNewCollection && newCollectionParent === c.id && (
@@ -98,7 +116,7 @@ export default function Sidebar({ collections, filterCollection }: {
               <input value={newCollection} onChange={e => setNewCollection(e.target.value)} placeholder="Sub-collection name" autoFocus onBlur={() => { if (!newCollection.trim()) cancelNewCollection(); }} onKeyDown={e => { if (e.key === "Escape") cancelNewCollection(); }} />
             </form>
           )}
-          {!isCollapsed && renderCollections(c.id, depth + 1)}
+          {!isCollapsed && renderCollections(c.id, depth + 1, section)}
         </div>
       );
     });
@@ -156,6 +174,21 @@ export default function Sidebar({ collections, filterCollection }: {
             </form>
           )}
           {!collapsed[-1] && renderCollections(null, 0)}
+          {collections.some(c => c.archived) && (
+            <div className="sidebar-item-row">
+              <button
+                className="sidebar-item"
+                onClick={() => navigate("/archived")}
+              >
+                <span className={`sidebar-chevron${collapsed[-2] ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(-2); }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                Archived
+                <span className="sidebar-add-child" style={{ visibility: "hidden" }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
+              </button>
+            </div>
+          )}
+          {!collapsed[-2] && renderCollections(null, 0, "archived")}
         </nav>
         <div className="sidebar-resize" onMouseDown={onResizeStart} onDoubleClick={() => setSidebarWidth(220)} />
       </aside>

@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useClickOutside } from "../useClickOutside";
 import { Collection } from "../interfaces";
 
-export default function Breadcrumb({ collections, filterCollection }: {
+export default function Breadcrumb({ collections, filterCollection, isArchived }: {
   collections: (Collection & { id: number })[];
   filterCollection: number;
+  isArchived?: boolean;
 }) {
   const navigate = useNavigate();
   const [dropdownId, setDropdownId] = useState<number | null>(null);
@@ -21,9 +22,12 @@ export default function Breadcrumb({ collections, filterCollection }: {
 
   if (!crumbs.length) return null;
 
+  const rootLabel = isArchived ? "Archived" : "All";
+  const rootPath = isArchived ? "/archived" : "/";
+
   return (
     <nav className="breadcrumb">
-      <span className="breadcrumb-item" onClick={() => navigate("/")}>All</span>
+      <span className="breadcrumb-item" onClick={() => navigate(rootPath)}>{rootLabel}</span>
       {crumbs.map((c, i) => {
         const parentId = i === 0 ? null : crumbs[i - 1].id;
         const siblings = collections.filter(s => (s.parent_id ?? null) === (parentId ?? null));
@@ -34,12 +38,12 @@ export default function Breadcrumb({ collections, filterCollection }: {
               {dropdownId === c.id && siblings.length > 1 && (
                 <div className="breadcrumb-dropdown">
                   {siblings.map(s => (
-                    <button key={s.id} className={s.id === c.id ? "active" : ""} onClick={() => { navigate(`/collections/${s.id}`); setDropdownId(null); }}>{s.name}</button>
+                    <button key={s.id} className={s.id === c.id ? "active" : ""} onClick={() => { navigate(`${isArchived ? "/archived" : ""}/collections/${s.id}`); setDropdownId(null); }}>{s.name}</button>
                   ))}
                 </div>
               )}
             </span>
-            <span className={`breadcrumb-item${c.id === filterCollection ? " active" : ""}`} onClick={() => navigate(`/collections/${c.id}`)}>{c.name}</span>
+            <span className={`breadcrumb-item${c.id === filterCollection ? " active" : ""}`} onClick={() => navigate(`${isArchived ? "/archived" : ""}/collections/${c.id}`)}>{c.name}</span>
           </span>
         );
       })}

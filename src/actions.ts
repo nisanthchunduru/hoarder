@@ -1,7 +1,7 @@
 import db from "./db";
 import {
   getLink, getLinks, createLink, getLinkByUrl, updateLink, deleteLink, getTags,
-  getCollections, createCollection, updateCollection,
+  getCollections, getCollection, createCollection, updateCollection,
 } from "./db-actions";
 import { Link, Collection } from "./interfaces";
 
@@ -53,6 +53,11 @@ export async function renameCollection(id: number, name: string): Promise<void> 
   await updateCollection(id, { name: name.trim() });
 }
 
+export async function toggleArchiveCollection(id: number): Promise<void> {
+  const coll = await getCollection(id);
+  await updateCollection(id, { archived: coll.archived ? 0 : 1 });
+}
+
 export async function deleteCollectionAndDescendants(id: number): Promise<void> {
   const allCollections = await db.collections.toArray();
   const allLinks = await db.links.toArray();
@@ -82,6 +87,7 @@ const actions = {
   deleteCollection: deleteCollectionAndDescendants,
   moveCollection,
   renameCollection,
+  archiveCollection: toggleArchiveCollection,
 };
 
 export default actions;

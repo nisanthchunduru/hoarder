@@ -59,7 +59,7 @@ export async function getCollections(): Promise<(Collection & { id: number; coun
 }
 
 export async function createCollection(name: string, parentId?: number): Promise<Collection> {
-  const coll: Collection = { name: name.trim(), parent_id: parentId ?? null, created_at: now() };
+  const coll: Collection = { name: name.trim(), parent_id: parentId ?? null, archived: 0, created_at: now() };
   coll.id = await db.collections.add(coll);
   return coll;
 }

@@ -11,6 +11,14 @@ class HoarderDB extends Dexie {
       links: "++id, url, archived, collection_id",
       collections: "++id, &name, parent_id",
     });
+    this.version(2).stores({
+      links: "++id, url, archived, collection_id",
+      collections: "++id, &name, parent_id, archived",
+    }).upgrade(tx => {
+      return tx.table("collections").toCollection().modify(c => {
+        if (c.archived === undefined) c.archived = 0;
+      });
+    });
   }
 }
 

@@ -210,6 +210,21 @@ body {
 .sidebar-item.new:hover { color: var(--accent); }
 .sidebar-item.new:hover svg { color: var(--accent); }
 
+.sidebar-item.context-only {
+  cursor: default;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.sidebar-item.context-only .sidebar-chevron {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.sidebar-item.context-only:hover {
+  background: none;
+}
+
 .sidebar-rename-input {
   border: none;
   outline: none;

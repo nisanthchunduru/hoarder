@@ -15,6 +15,8 @@ export default function App() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = window.location.hash;
+  const isArchivedSection = location.startsWith("#/archived");
 
   const filterCollection = id ? Number(id) : undefined;
   const tab: Tab = (searchParams.get("tab") as Tab) || "unread";
@@ -38,8 +40,15 @@ export default function App() {
   const tagMenuRef = useClickOutside<HTMLDivElement>(tagMenuOpen, closeTag);
 
   const allLinks = useLiveQuery(
-    () => actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection),
-    [search, tab, filterCollection]
+    async () => {
+      if (isArchivedSection && !filterCollection) {
+        const archivedCollIds = (await actions.collections()).filter(c => c.archived).map(c => c.id);
+        const all = await actions.getLinks(search, tab === "archived" ? 1 : 0);
+        return all.filter(l => l.collection_id && archivedCollIds.includes(l.collection_id));
+      }
+      return actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection);
+    },
+    [search, tab, filterCollection, isArchivedSection]
   ) ?? [];
 
   const links = filterTags.length
@@ -112,10 +121,10 @@ export default function App() {
 
   return (
     <div className="layout">
-      <Sidebar collections={collections} filterCollection={filterCollection} />
+      <Sidebar collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection} />
 
       <main className="main">
-        {filterCollection && <Breadcrumb collections={collections} filterCollection={filterCollection} />}
+        {filterCollection && <Breadcrumb collections={collections} filterCollection={filterCollection} isArchived={!!collections.find(c => c.id === filterCollection)?.archived} />}
 
         <div className="page-header">
           <h2 className="page-title">
@@ -136,7 +145,7 @@ export default function App() {
               </span>
             ) : filterCollection && collections.find(c => c.id === filterCollection)
               ? collections.find(c => c.id === filterCollection)!.name
-              : "All"}
+              : isArchivedSection ? "Archived" : "All"}
           </h2>
           {filterCollection && (
             <div className="card-menu" ref={collMenuRef}>
@@ -152,6 +161,11 @@ export default function App() {
                     const coll = collections.find(c => c.id === filterCollection);
                     if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
                   }}>Rename</button>
+                  <button onClick={() => {
+                    actions.archiveCollection(filterCollection!);
+                    setCollMenuOpen(false);
+                    navigate("/");
+                  }}>{collections.find(c => c.id === filterCollection)?.archived ? "Unarchive" : "Archive"}</button>
                   <button className="danger" onClick={async () => {
                     if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
                       await actions.deleteCollection(filterCollection);
@@ -172,8 +186,8 @@ export default function App() {
 
         <div className="toolbar">
           <div className="tabs">
-            <button className={tab === "unread" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.delete("tab"); return prev; })}>Unread</button>
-            <button className={tab === "archived" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.set("tab", "archived"); return prev; })}>Archive</button>
+            <button className={tab === "unread" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.delete("tab"); return prev; })}>Saved</button>
+            <button className={tab === "archived" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.set("tab", "archived"); return prev; })}>Archived</button>
           </div>
           <div className="group-menu" ref={groupRef}>
             <button className="group-toggle" onClick={() => setGroupMenuOpen(!groupMenuOpen)}>
