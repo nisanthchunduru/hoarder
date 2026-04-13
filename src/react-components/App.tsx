@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import "./style.css";
+import "../style.css";
 
 interface Link {
   id: number;
@@ -33,22 +33,9 @@ function tagColor(name: string) {
   return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
 }
 
-import * as db from "./db";
-
-const actions = {
-  getLinks: db.getLinks,
-  addLink: db.addLink,
-  setTags: db.setLinkTags,
-  setCollection: (id: number, collection_id: number | null) => db.setLinkCollection(id, collection_id),
-  archiveLink: db.toggleArchive,
-  deleteLink: db.deleteLink,
-  tags: db.getTags,
-  collections: db.getCollections,
-  createCollection: db.createCollection,
-  deleteCollection: db.deleteCollectionAndDescendants,
-  moveCollection: db.moveCollection,
-  renameCollection: db.renameCollection,
-};
+import actions from "../actions";
+import { exportData } from "../export";
+import { importData } from "../import";
 
 function hostname(url: string) {
   try { return new URL(url).hostname.replace("www.", ""); } catch { return url; }
@@ -462,7 +449,7 @@ export default function App() {
             {logoMenuOpen && (
               <div className="card-menu-dropdown logo-menu-dropdown">
                 <button onClick={async () => {
-                  const json = await db.exportData();
+                  const json = await exportData();
                   const blob = new Blob([json], { type: "application/json" });
                   const a = document.createElement("a");
                   a.href = URL.createObjectURL(blob);
@@ -479,7 +466,7 @@ export default function App() {
                     if (!file) return;
                     const json = await file.text();
                     if (window.confirm("Importing data will replace all existing data. Continue?")) {
-                      await db.importData(json);
+                      await importData(json);
                       load();
                     }
                   };
