@@ -17,7 +17,9 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("sidebarCollapsed") || "{}"); } catch { return {}; }
+  });
   const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
   const [logoMenuOpen, setLogoMenuOpen] = useState(false);
 
@@ -25,6 +27,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
   const logoMenuRef = useClickOutside<HTMLDivElement>(logoMenuOpen, closeLogo);
 
   useEffect(() => { localStorage.setItem("sidebarWidth", String(sidebarWidth)); }, [sidebarWidth]);
+  useEffect(() => { localStorage.setItem("sidebarCollapsed", JSON.stringify(collapsed)); }, [collapsed]);
 
   const toggleCollapse = (key: string | number) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
