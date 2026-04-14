@@ -14,6 +14,7 @@ export interface Collection {
   name: string;
   parent_id: number | null;
   archived: number;
+  pinned: number;
   created_at: string;
 }
 

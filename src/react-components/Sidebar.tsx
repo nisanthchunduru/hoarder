@@ -154,10 +154,25 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
       </div>
       <aside className="sidebar">
         <nav className="sidebar-nav">
+          {collections.some(c => c.pinned && !c.archived) && (
+            <>
+              <span className="sidebar-label">Pinned Collections</span>
+              {collections.filter(c => c.pinned && !c.archived).map(c => (
+                <div key={c.id} className="sidebar-item-row">
+                  <button
+                    className={`sidebar-item${filterCollection === c.id && !isArchivedSection ? " active" : ""}`}
+                    onClick={() => navigate(`/collections/${c.id}`)}
+                  >
+                    {c.name}
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
           <span className="sidebar-label">Collections</span>
           <div className="sidebar-item-row">
             <button
-              className={`sidebar-item${!filterCollection ? " active" : ""}`}
+              className={`sidebar-item${!filterCollection && !isArchivedSection ? " active" : ""}`}
               onClick={() => navigate("/")}
               onDragOver={e => e.preventDefault()}
               onDragEnter={e => e.currentTarget.classList.add("drop-over")}
@@ -178,20 +193,23 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
           )}
           {!collapsed[-1] && renderCollections(null, 0)}
           {collections.some(c => c.archived) && (
-            <div className="sidebar-item-row">
-              <button
-                className="sidebar-item"
-                onClick={() => navigate("/archived")}
-              >
-                <span className={`sidebar-chevron${collapsed[-2] ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(-2); }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                Archived
-                <span className="sidebar-add-child" style={{ visibility: "hidden" }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
-              </button>
-            </div>
+            <>
+              <span className="sidebar-label">Archived Collections</span>
+              <div className="sidebar-item-row">
+                <button
+                  className={`sidebar-item${isArchivedSection && !filterCollection ? " active" : ""}`}
+                  onClick={() => navigate("/archived")}
+                >
+                  <span className={`sidebar-chevron${collapsed["archived:-1"] ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse("archived:-1"); }}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  All
+                  <span className="sidebar-add-child" style={{ visibility: "hidden" }}><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg></span>
+                </button>
+              </div>
+              {!collapsed["archived:-1"] && renderCollections(null, 0, "archived")}
+            </>
           )}
-          {!collapsed[-2] && renderCollections(null, 0, "archived")}
         </nav>
         <div className="sidebar-resize" onMouseDown={onResizeStart} onDoubleClick={() => setSidebarWidth(220)} />
       </aside>

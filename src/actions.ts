@@ -58,6 +58,11 @@ export async function toggleArchiveCollection(id: number): Promise<void> {
   await updateCollection(id, { archived: coll.archived ? 0 : 1 });
 }
 
+export async function togglePinCollection(id: number): Promise<void> {
+  const coll = await getCollection(id);
+  await updateCollection(id, { pinned: coll.pinned ? 0 : 1 });
+}
+
 export async function deleteCollectionAndDescendants(id: number): Promise<void> {
   const allCollections = await db.collections.toArray();
   const allLinks = await db.links.toArray();
@@ -88,6 +93,7 @@ const actions = {
   moveCollection,
   renameCollection,
   archiveCollection: toggleArchiveCollection,
+  pinCollection: togglePinCollection,
 };
 
 export default actions;

@@ -162,6 +162,10 @@ export default function App() {
                     if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
                   }}>Rename</button>
                   <button onClick={() => {
+                    actions.pinCollection(filterCollection!);
+                    setCollMenuOpen(false);
+                  }}>{collections.find(c => c.id === filterCollection)?.pinned ? "Unpin" : "Pin"}</button>
+                  <button onClick={() => {
                     actions.archiveCollection(filterCollection!);
                     setCollMenuOpen(false);
                     navigate("/");
