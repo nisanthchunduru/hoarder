@@ -1,0 +1,14 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+@media (min-width: 1200px) { .main { max-width: 800px; } }
+@media (min-width: 1600px) { .main { max-width: 960px; } }
