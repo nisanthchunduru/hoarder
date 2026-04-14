@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClickOutside } from "../useClickOutside";
 import actions from "../actions";
@@ -6,6 +6,7 @@ import { exportData } from "../export";
 import { importData } from "../import";
 import { Collection } from "../interfaces";
 import SidebarSection from "./SidebarSection";
+import CollectionTree from "./CollectionTree";
 
 export default function Sidebar({ collections, filterCollection, isArchivedSection }: {
   collections: (Collection & { id: number })[];
@@ -19,6 +20,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
   const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
   const [logoMenuOpen, setLogoMenuOpen] = useState(false);
   const [newCollection, setNewCollection] = useState("");
+  const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
 
   const closeLogo = useCallback(() => setLogoMenuOpen(false), []);
@@ -44,8 +46,9 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
   const handleNewCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollection.trim()) return;
-    await actions.createCollection(newCollection.trim());
+    await actions.createCollection(newCollection.trim(), newCollectionParent || undefined);
     setNewCollection("");
+    setNewCollectionParent(null);
     setShowNewCollection(false);
   };
 
@@ -94,16 +97,40 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
           {hasPinned && (
             <>
               <span className="sidebar-label">Pinned Collections</span>
-              {collections.filter(c => c.pinned && !c.archived).map(c => (
-                <div key={c.id} className="sidebar-item-row">
-                  <button
-                    className={`sidebar-item${filterCollection === c.id && !isArchivedSection ? " active" : ""}`}
-                    onClick={() => navigate(`/collections/${c.id}`)}
-                  >
-                    {c.name}
-                  </button>
-                </div>
-              ))}
+              {collections.filter(c => c.pinned && !c.archived).map(c => {
+                const collapseKey = `pinned:${c.id}`;
+                const isCollapsed = collapsed[collapseKey];
+                return (
+                  <React.Fragment key={c.id}>
+                    <div className="sidebar-item-row">
+                      <button
+                        className={`sidebar-item${filterCollection === c.id && !isArchivedSection ? " active" : ""}`}
+                        onClick={() => navigate(`/collections/${c.id}`)}
+                      >
+                        <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </span>
+                        {c.name}
+                        <span className="sidebar-add-child" title="Add sub-collection" onClick={e => { e.stopPropagation(); setNewCollectionParent(c.id); setShowNewCollection(true); }}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </span>
+                      </button>
+                    </div>
+                    {showNewCollection && newCollectionParent === c.id && (
+                      <form onSubmit={handleNewCollection} className="sidebar-new-form">
+                        <input value={newCollection} onChange={e => setNewCollection(e.target.value)} placeholder="Sub-collection name" autoFocus onBlur={() => { if (!newCollection.trim()) { setShowNewCollection(false); setNewCollectionParent(null); } }} onKeyDown={e => { if (e.key === "Escape") { setShowNewCollection(false); setNewCollectionParent(null); } }} />
+                      </form>
+                    )}
+                    {!isCollapsed && (
+                      <CollectionTree
+                        collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
+                        section="active" parentId={c.id} depth={1}
+                        collapsed={collapsed} toggleCollapse={toggleCollapse} hasArchivedDescendant={hasArchivedDescendant}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </>
           )}
 
@@ -113,9 +140,9 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
             collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
             collapsed={collapsed} toggleCollapse={toggleCollapse} collapseKey="active:-1"
             hasArchivedDescendant={hasArchivedDescendant}
-            onAddCollection={() => setShowNewCollection(true)}
-            showNewForm={showNewCollection} onNewSubmit={handleNewCollection}
-            newValue={newCollection} onNewChange={setNewCollection} onNewCancel={() => { setNewCollection(""); setShowNewCollection(false); }}
+            onAddCollection={() => { setNewCollectionParent(null); setShowNewCollection(true); }}
+            showNewForm={showNewCollection && newCollectionParent === null} onNewSubmit={handleNewCollection}
+            newValue={newCollection} onNewChange={setNewCollection} onNewCancel={() => { setNewCollection(""); setNewCollectionParent(null); setShowNewCollection(false); }}
             droppable={handleDrop}
           />
 
