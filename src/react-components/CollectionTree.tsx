@@ -54,6 +54,7 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
         const isCollapsed = collapsed[collapseKey];
         const isContextOnly = section === "archived" && !c.archived;
         const isActive = filterCollection === c.id && (section === "archived" === !!isArchivedSection);
+        const hasChildren = collections.some(ch => ch.parent_id === c.id);
 
         return (
           <div key={c.id}>
@@ -79,9 +80,11 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
                 onDragLeave={e => e.currentTarget.classList.remove("drop-over")}
                 onDrop={e => handleDrop(e, c.id)}
               >
-                <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
+                {hasChildren ? (
+                  <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                ) : <span className="sidebar-chevron" style={{ visibility: "hidden" }} />}
                 {renamingId === c.id ? (
                   <input
                     className="sidebar-rename-input"

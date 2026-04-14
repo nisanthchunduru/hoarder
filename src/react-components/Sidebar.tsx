@@ -100,6 +100,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
               {collections.filter(c => c.pinned && !c.archived).map(c => {
                 const collapseKey = `pinned:${c.id}`;
                 const isCollapsed = collapsed[collapseKey];
+                const hasChildren = collections.some(ch => ch.parent_id === c.id);
                 return (
                   <React.Fragment key={c.id}>
                     <div className="sidebar-item-row">
@@ -107,9 +108,11 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
                         className={`sidebar-item${filterCollection === c.id && !isArchivedSection ? " active" : ""}`}
                         onClick={() => navigate(`/collections/${c.id}`)}
                       >
-                        <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </span>
+                        {hasChildren ? (
+                          <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </span>
+                        ) : <span className="sidebar-chevron" style={{ visibility: "hidden" }} />}
                         {c.name}
                         <span className="sidebar-add-child" title="Add sub-collection" onClick={e => { e.stopPropagation(); setNewCollectionParent(c.id); setShowNewCollection(true); }}>
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
