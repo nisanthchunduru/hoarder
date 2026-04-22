@@ -23,4 +23,4 @@ export interface TagCount {
   count: number;
 }
 
-export type Tab = "unread" | "archived";
+export type Tab = "unread" | "archived" | "all";

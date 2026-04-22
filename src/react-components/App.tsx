@@ -43,10 +43,12 @@ export default function App() {
     async () => {
       if (isArchivedSection && !filterCollection) {
         const archivedCollIds = (await actions.collections()).filter(c => c.archived).map(c => c.id);
-        const all = await actions.getLinks(search, tab === "archived" ? 1 : 0);
+        const archived = tab === "all" ? undefined : tab === "archived" ? 1 : 0;
+        const all = await actions.getLinks(search, archived);
         return all.filter(l => l.collection_id && archivedCollIds.includes(l.collection_id));
       }
-      return actions.getLinks(search, tab === "archived" ? 1 : 0, undefined, filterCollection);
+      const archived = tab === "all" ? undefined : tab === "archived" ? 1 : 0;
+      return actions.getLinks(search, archived, undefined, filterCollection);
     },
     [search, tab, filterCollection, isArchivedSection]
   ) ?? [];
@@ -192,6 +194,7 @@ export default function App() {
           <div className="tabs">
             <button className={tab === "unread" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.delete("tab"); return prev; })}>Bookmarked</button>
             <button className={tab === "archived" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.set("tab", "archived"); return prev; })}>Archived</button>
+            <button className={tab === "all" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.set("tab", "all"); return prev; })}>All</button>
           </div>
           <div className="group-menu" ref={groupRef}>
             <button className="group-toggle" onClick={() => setGroupMenuOpen(!groupMenuOpen)}>

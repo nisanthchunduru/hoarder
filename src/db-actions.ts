@@ -5,8 +5,8 @@ function now() { return new Date().toISOString().replace("T", " ").slice(0, 19);
 
 // ── Links ──
 
-export async function getLinks(q: string, archived: number, _tag?: string, collectionId?: number): Promise<Link[]> {
-  let results = await db.links.where("archived").equals(archived).toArray();
+export async function getLinks(q: string, archived?: number, _tag?: string, collectionId?: number): Promise<Link[]> {
+  let results = archived !== undefined ? await db.links.where("archived").equals(archived).toArray() : await db.links.toArray();
   if (collectionId) results = results.filter(l => l.collection_id === collectionId);
   if (q) {
     const lower = q.toLowerCase();
