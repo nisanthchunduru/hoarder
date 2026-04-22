@@ -190,7 +190,7 @@ export default function App() {
 
         <div className="toolbar">
           <div className="tabs">
-            <button className={tab === "unread" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.delete("tab"); return prev; })}>Saved</button>
+            <button className={tab === "unread" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.delete("tab"); return prev; })}>Bookmarked</button>
             <button className={tab === "archived" ? "active" : ""} onClick={() => setSearchParams(prev => { prev.set("tab", "archived"); return prev; })}>Archived</button>
           </div>
           <div className="group-menu" ref={groupRef}>
