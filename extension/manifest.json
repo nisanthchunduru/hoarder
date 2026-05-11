@@ -7,11 +7,9 @@
     "128": "icon-128.png"
   },
   "action": {
-    "default_icon": "icon-128.png"
-  },
-  "background": {
-    "service_worker": "background.js",
-    "scripts": ["background.js"]
+    "default_icon": "icon-128.png",
+    "default_popup": "popup.html",
+    "default_title": "Save to Hoarder"
   },
   "browser_specific_settings": {
     "gecko": {
@@ -21,5 +19,5 @@
       }
     }
   },
-  "permissions": []
+  "permissions": ["tabs"]
 }
