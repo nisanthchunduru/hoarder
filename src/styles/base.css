@@ -5,6 +5,10 @@
   margin: 0;
 }
 
+input, textarea, select, button {
+  color: inherit;
+}
+
 :root {
   --bg: #faf9f7;
   --surface: #fff;
@@ -14,6 +18,58 @@
   --accent: #e8590c;
   --accent-hover: #d9480f;
   --radius: 12px;
+  --hover-bg: #f5f3f0;
+  --accent-bg: #fff5f0;
+  --hover-border: #d0cdc8;
+  --border-hover-alt: #ccc;
+  --danger: #e03131;
+  --danger-bg: #fff0f0;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-tab: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-popover: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --border: #3a3a3a;
+    --text: #e8e5e1;
+    --muted: #9a9590;
+    --accent: #f47a3e;
+    --accent-hover: #f5893f;
+    --hover-bg: #2e2e2e;
+    --accent-bg: #2e2018;
+    --hover-border: #4a4a4a;
+    --border-hover-alt: #555;
+    --danger: #ff6b6b;
+    --danger-bg: #2e1a1a;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --shadow-tab: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-popover: 0 12px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1a1a1a;
+  --surface: #242424;
+  --border: #3a3a3a;
+  --text: #e8e5e1;
+  --muted: #9a9590;
+  --accent: #f47a3e;
+  --accent-hover: #f5893f;
+  --hover-bg: #2e2e2e;
+  --accent-bg: #2e2018;
+  --hover-border: #4a4a4a;
+  --border-hover-alt: #555;
+  --danger: #ff6b6b;
+  --danger-bg: #2e1a1a;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-tab: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-popover: 0 12px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 body {

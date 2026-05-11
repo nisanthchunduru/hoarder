@@ -9,6 +9,7 @@ import Sidebar from "./Sidebar";
 import Breadcrumb from "./Breadcrumb";
 import LinkCard from "./LinkCard";
 import Chip from "./Chip";
+import { useTheme } from "../useTheme";
 import "../style.css";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [groupBy, setGroupBy] = useState<"none" | "domain" | "date">("none");
   const [groupMenuOpen, setGroupMenuOpen] = useState(false);
+  const { theme, cycle } = useTheme();
   const [collMenuOpen, setCollMenuOpen] = useState(false);
   const [renamingTitle, setRenamingTitle] = useState(false);
   const [renameValue, setRenameValue] = useState("");
@@ -124,6 +126,9 @@ export default function App() {
   return (
     <div className="layout">
       <Sidebar collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection} />
+      <button className="theme-toggle" onClick={cycle} title={`Theme: ${theme}`}>
+        {theme === "dark" ? "🌙" : theme === "light" ? "☀️" : "💻"}
+      </button>
 
       <main className="main">
         {filterCollection && <Breadcrumb collections={collections} filterCollection={filterCollection} isArchived={!!collections.find(c => c.id === filterCollection)?.archived} />}

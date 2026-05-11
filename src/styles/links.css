@@ -18,8 +18,8 @@
 }
 
 .link-card:hover {
-  border-color: #d0cdc8;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: var(--hover-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-grip {

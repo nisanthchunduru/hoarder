@@ -101,7 +101,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 200;
   animation: popIn 0.12s ease-out;
@@ -122,7 +122,7 @@
   transition: background 0.1s;
 }
 
-.breadcrumb-dropdown button:hover { background: #f5f3f0; }
+.breadcrumb-dropdown button:hover { background: var(--hover-bg); }
 .breadcrumb-dropdown button.active { color: var(--accent); font-weight: 500; }
 
 .toolbar {
@@ -157,7 +157,7 @@
 .tabs button.active {
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-tab);
 }
 
 .search {
@@ -188,7 +188,7 @@
   transition: all 0.15s;
 }
 
-.group-toggle:hover { border-color: #ccc; color: var(--text); }
+.group-toggle:hover { border-color: var(--border-hover-alt); color: var(--text); }
 .group-chevron { opacity: 0.5; }
 .group-menu { position: relative; }
 
@@ -200,7 +200,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 150;
   animation: popIn 0.12s ease-out;
@@ -220,6 +220,6 @@
   transition: background 0.1s;
 }
 
-.group-dropdown button:hover { background: #f5f3f0; }
+.group-dropdown button:hover { background: var(--hover-bg); }
 .group-dropdown button.active { color: var(--accent); font-weight: 500; }
 .group-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }

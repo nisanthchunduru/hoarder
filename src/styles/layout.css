@@ -12,3 +12,22 @@
 
 @media (min-width: 1200px) { .main { max-width: 800px; } }
 @media (min-width: 1600px) { .main { max-width: 960px; } }
+
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  transition: border-color 0.15s;
+}
+
+.theme-toggle:hover { border-color: var(--border-hover-alt); }

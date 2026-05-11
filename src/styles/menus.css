@@ -31,7 +31,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 150;
   animation: popIn 0.12s ease-out;
@@ -51,9 +51,9 @@
   transition: background 0.1s;
 }
 
-.card-menu-dropdown button:hover { background: #f5f3f0; }
-.card-menu-dropdown button.danger { color: #e03131; }
-.card-menu-dropdown button.danger:hover { background: #fff0f0; }
+.card-menu-dropdown button:hover { background: var(--hover-bg); }
+.card-menu-dropdown button.danger { color: var(--danger); }
+.card-menu-dropdown button.danger:hover { background: var(--danger-bg); }
 
 .logo-menu-dropdown {
   left: 0;

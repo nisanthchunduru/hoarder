@@ -60,7 +60,7 @@
   border-color: var(--accent);
   color: var(--accent);
   border-style: solid;
-  background: #fff5f0;
+  background: var(--accent-bg);
 }
 
 .tag-popover-anchor { position: relative; }
@@ -73,7 +73,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-popover);
   z-index: 200;
   animation: popIn 0.15s ease-out;
   overflow: hidden;
@@ -158,7 +158,7 @@
 }
 
 .tag-popover-option:hover,
-.tag-popover-option.hl { background: #f5f3f0; }
+.tag-popover-option.hl { background: var(--hover-bg); }
 
 .tag-popover-create {
   display: block;
@@ -178,7 +178,7 @@
 .tag-popover-create:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: #fff5f0;
+  background: var(--accent-bg);
 }
 
 .tag-popover-create strong { color: var(--text); font-weight: 600; }
@@ -199,7 +199,7 @@
   transition: all 0.15s;
 }
 
-.tag-filter-toggle:hover { border-color: #ccc; color: var(--text); }
+.tag-filter-toggle:hover { border-color: var(--border-hover-alt); color: var(--text); }
 
 .tag-filter-dropdown {
   position: absolute;
@@ -209,7 +209,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 200;
   animation: popIn 0.12s ease-out;
@@ -233,8 +233,8 @@
   transition: background 0.1s;
 }
 
-.tag-filter-dropdown button:hover { background: #f5f3f0; }
-.tag-filter-dropdown button.selected { background: #faf5f2; }
+.tag-filter-dropdown button:hover { background: var(--hover-bg); }
+.tag-filter-dropdown button.selected { background: var(--accent-bg); }
 
 .tag-checkbox {
   width: 16px;
