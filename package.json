@@ -4,11 +4,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build-ext": "node scripts/build-extension.js",
-    "zip-ext": "mkdir -p build && cd extension && zip -r ../build/extension.zip .",
-    "build-and-zip-ext": "npm run build-ext && npm run zip-ext",
-    "zip-ext-src": "mkdir -p build && zip -r build/extension-source.zip src public scripts index.html package.json package-lock.json tsconfig.json vite.config.ts README.md",
-    "build-ext-zips": "npm run build-and-zip-ext && npm run zip-ext-src"
+    "ext:build": "node scripts/build-extension.js",
+    "ext:watch": "vite build --watch --outDir extension --emptyOutDir false",
+    "ext:dev": "npm run ext:build && (npm run ext:watch & web-ext run --config web-ext-config.cjs)",
+    "ext:lint": "web-ext lint --config web-ext-config.cjs",
+    "ext:zip": "mkdir -p build && cd extension && zip -r ../build/extension.zip .",
+    "ext:package": "npm run ext:build && npm run ext:zip",
+    "ext:zip-source": "mkdir -p build && zip -r build/extension-source.zip src public scripts index.html package.json package-lock.json tsconfig.json vite.config.ts README.md",
+    "ext:release": "npm run ext:package && npm run ext:zip-source"
   },
   "dependencies": {
     "dexie": "^4.4.2",
