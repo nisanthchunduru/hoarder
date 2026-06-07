@@ -39,7 +39,7 @@ Hoarder can also be installed as a Chrome or Firefox extension. To do so, build 
 npm run ext:build
 ```
 
-`ext:build` NPM script compiles TypeScript/React files (using Vite) to `extension/`
+`ext:build` NPM script compiles TypeScript/React files (using Vite) and copies extension assets to `build/extension/`
 
 Then, follow the steps below
 
@@ -47,13 +47,13 @@ Then, follow the steps below
 
 1. Open Chrome and visit `chrome://extensions`
 2. Enable "Developer mode"
-3. Click "Load unpacked" and select the `extension/` folder
+3. Click "Load unpacked" and select the `build/extension/` folder
 
 #### Firefox
 
 1. Open Firefox and visit `about:debugging`
 2. Click "This Firefox"
-3. Click "Load Temporary Add-on" and select `extension/manifest.json`
+3. Click "Load Temporary Add-on" and select `build/extension/manifest.json`
 
 ### Build extension zip
 

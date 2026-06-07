@@ -1,9 +1,4 @@
 node_modules
 *.db
-dist
 build
 .web-ext-profile
-extension/assets
-extension/index.html
-extension/popup.html
-extension/favicon.svg

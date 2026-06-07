@@ -36,7 +36,7 @@ const profileDir = resolve(__dirname, ".web-ext-profile");
 mkdirSync(profileDir, { recursive: true });
 
 module.exports = {
-  sourceDir: "./extension",
+  sourceDir: "./build/extension",
   artifactsDir: "./build",
   ignoreFiles: [".DS_Store"],
   run: {

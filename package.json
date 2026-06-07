@@ -3,14 +3,14 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --outDir build/app",
     "ext:build": "node scripts/build-extension.js",
-    "ext:watch": "vite build --watch --outDir extension --emptyOutDir false",
+    "ext:watch": "vite build --watch --outDir build/extension --emptyOutDir false",
     "ext:dev": "npm run ext:build && (npm run ext:watch & web-ext run --config web-ext-config.cjs)",
     "ext:lint": "web-ext lint --config web-ext-config.cjs",
-    "ext:zip": "mkdir -p build && cd extension && zip -r ../build/extension.zip .",
+    "ext:zip": "mkdir -p build && rm -f build/extension.zip && cd build/extension && zip -r ../extension.zip .",
     "ext:package": "npm run ext:build && npm run ext:zip",
-    "ext:zip-source": "mkdir -p build && zip -r build/extension-source.zip src public scripts index.html package.json package-lock.json tsconfig.json vite.config.ts README.md",
+    "ext:zip-source": "mkdir -p build && zip -r build/extension-source.zip src public scripts extension-assets index.html popup.html package.json package-lock.json tsconfig.json vite.config.ts web-ext-config.cjs README.md",
     "ext:release": "npm run ext:package && npm run ext:zip-source"
   },
   "dependencies": {
