@@ -36,10 +36,10 @@ and visit [http://localhost:5173](http://localhost:5173)
 Hoarder can also be installed as a Chrome or Firefox extension. To do so, build the extension
 
 ```bash
-npm run build-ext
+npm run ext:build
 ```
 
-`build-ext` NPM script compiles TypeScript/React files (using Vite) to `extension/`
+`ext:build` NPM script compiles TypeScript/React files (using Vite) to `extension/`
 
 Then, follow the steps below
 
@@ -57,13 +57,13 @@ Then, follow the steps below
 
 ### Build extension zip
 
-If you'd like zip the extension after building, run
+If you'd like to zip the extension after building, run
 
 ```bash
-npm run zip-ext
+npm run ext:zip
 ```
 
-`zip-ext` NPM script creates an `extension.zip` file in `build/`
+`ext:zip` NPM script creates an `extension.zip` file in `build/`
 
 ## Features
 
