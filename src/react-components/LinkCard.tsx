@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Link, Collection, TagCount } from "../interfaces";
-import { hostname, timeAgo } from "../utils";
+import { formatAddedDate, hostname } from "../utils";
 import LinkTags from "./LinkTags";
 import CardMenu from "./CardMenu";
 
@@ -25,7 +25,7 @@ export default function LinkCard({ link, collections, filterCollection, allTags 
         <a href={link.url} target="_blank" rel="noopener noreferrer" className="link-main">
           <span className="link-title">{link.url}</span>
           <span className="link-meta">
-            {hostname(link.url)} · {timeAgo(link.created_at)}
+            {hostname(link.url)} · {formatAddedDate(link.created_at)}
             {!filterCollection && link.collection_id && collections.find(c => c.id === link.collection_id) && (
               <> · <span className="link-collection" onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/collections/${link.collection_id}`); }}>{collections.find(c => c.id === link.collection_id)!.name}</span></>
             )}

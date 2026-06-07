@@ -19,11 +19,10 @@ export function hostname(url: string) {
   try { return new URL(url).hostname.replace("www.", ""); } catch { return url; }
 }
 
-export function timeAgo(d: string) {
-  const m = Math.floor((Date.now() - new Date(d + "Z").getTime()) / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+export function formatAddedDate(d: string) {
+  return new Date(d + "Z").toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
