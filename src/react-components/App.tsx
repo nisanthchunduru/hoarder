@@ -12,6 +12,12 @@ import Chip from "./Chip";
 import { useTheme } from "../useTheme";
 import "../style.css";
 
+const PinSvg = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M9.5 1.8 14.2 6.5M10.8 3.1 7.6 6.3 5 5.8 4.1 6.7 9.3 11.9 10.2 11 9.7 8.4 12.9 5.2M7.5 9.5 3 14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 export default function App() {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,6 +67,7 @@ export default function App() {
 
   const allTags = useLiveQuery(() => actions.tags(), []) ?? [];
   const collections = useLiveQuery(() => actions.collections(), []) ?? [];
+  const currentCollection = filterCollection ? collections.find(c => c.id === filterCollection) : undefined;
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +161,17 @@ export default function App() {
               ? collections.find(c => c.id === filterCollection)!.name
               : isArchivedSection ? "Archived" : "All"}
           </h2>
+          {currentCollection && !renamingTitle && (
+            <button
+              type="button"
+              className={`page-title-pin${currentCollection.pinned ? " pinned" : ""}`}
+              title={currentCollection.pinned ? "Unpin collection" : "Pin collection"}
+              aria-label={currentCollection.pinned ? "Unpin collection" : "Pin collection"}
+              onClick={() => actions.pinCollection(currentCollection.id)}
+            >
+              <PinSvg />
+            </button>
+          )}
           {filterCollection && (
             <div className="card-menu" ref={collMenuRef}>
               <button className="card-menu-trigger" onClick={() => setCollMenuOpen(!collMenuOpen)}>
@@ -168,10 +186,6 @@ export default function App() {
                     const coll = collections.find(c => c.id === filterCollection);
                     if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
                   }}>Rename</button>
-                  <button onClick={() => {
-                    actions.pinCollection(filterCollection!);
-                    setCollMenuOpen(false);
-                  }}>{collections.find(c => c.id === filterCollection)?.pinned ? "Unpin" : "Pin"}</button>
                   <button onClick={() => {
                     actions.archiveCollection(filterCollection!);
                     setCollMenuOpen(false);

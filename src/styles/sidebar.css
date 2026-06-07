@@ -136,7 +136,6 @@
 .sidebar-chevron:hover { color: var(--text); }
 
 .sidebar-add-child {
-  margin-left: auto;
   width: 24px;
   height: 24px;
   border: none;
@@ -150,6 +149,8 @@
   opacity: 0.3;
   transition: opacity 0.15s, background 0.15s;
 }
+
+.sidebar-add-child { margin-left: auto; }
 
 .sidebar-add-child svg { color: var(--muted); transition: color 0.15s; }
 .sidebar-item:hover .sidebar-add-child { opacity: 0.6; }
