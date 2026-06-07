@@ -23,7 +23,7 @@ cd hoarder
 npm install
 ```
 
-Start dev sever
+Start dev server
 
 ```bash
 npm run dev
