@@ -218,7 +218,10 @@ export default function App() {
           {allVisible.length > 0 && (
             <div className="tag-filter-menu" ref={tagMenuRef}>
               <button className="tag-filter-toggle" onClick={() => setTagMenuOpen(!tagMenuOpen)}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3h11M3.5 7h7M5.5 11h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2.5 8.1V3.6c0-.6.5-1.1 1.1-1.1h4.5c.3 0 .6.1.8.3l4.4 4.4c.4.4.4 1.1 0 1.6l-4.5 4.5c-.4.4-1.1.4-1.6 0L2.8 8.9c-.2-.2-.3-.5-.3-.8Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                  <circle cx="5.2" cy="5.2" r="0.8" fill="currentColor"/>
+                </svg>
                 <svg className="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
               {tagMenuOpen && (

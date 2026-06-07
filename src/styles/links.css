@@ -7,6 +7,7 @@
 }
 
 .link-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -21,32 +22,67 @@
   border-color: var(--hover-border);
 }
 
-.card-grip {
+.link-card-actions {
+  position: absolute;
+  left: 14px;
+  bottom: -12px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+  gap: 4px;
+  padding: 0 4px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+  z-index: 2;
 }
 
-.copy-btn {
+.link-card:hover .link-card-actions,
+.link-card:focus-within .link-card-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.link-card-action {
   display: grid;
   place-items: center;
-  width: 28px;
+  width: 24px;
   height: 24px;
-  border: none;
-  border-radius: 6px;
-  background: none;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 9999px;
+  background: var(--surface);
   color: var(--muted);
   cursor: pointer;
-  opacity: 0.3;
-  transition: all 0.15s;
+  line-height: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
-.copy-btn:hover {
-  background: var(--bg);
+.link-card-action svg {
+  display: block;
+}
+
+.link-card-action:hover,
+.link-card-action.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
   color: var(--accent);
-  opacity: 1;
+}
+
+.link-card .tag-popover-anchor {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 46px;
+  z-index: 200;
+}
+
+.link-card .tag-popover {
+  position: static;
 }
 
 .link-body {
