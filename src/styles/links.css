@@ -102,10 +102,30 @@
   min-width: 0;
 }
 
+.link-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
 .link-title {
+  flex-shrink: 0;
+  max-width: 45%;
   font-weight: 600;
   font-size: 15px;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .link-meta {

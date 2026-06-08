@@ -67,6 +67,31 @@
   gap: 1px;
 }
 
+.sidebar-search-wrap {
+  padding: 4px 0 6px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-search {
+  width: 100%;
+  padding: 6px 20px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.sidebar-search::placeholder {
+  color: var(--muted);
+}
+
+.sidebar-search:focus {
+  background: transparent;
+}
+
 .sidebar-label {
   font-size: 10px;
   font-weight: 600;
@@ -194,4 +219,10 @@
   font-size: 13px;
   outline: none;
   background: var(--bg);
+}
+
+.sidebar-search-empty {
+  margin: 8px 20px 0;
+  font-size: 12px;
+  color: var(--muted);
 }

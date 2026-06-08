@@ -22,6 +22,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
   const [newCollection, setNewCollection] = useState("");
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
+  const [collectionSearch, setCollectionSearch] = useState("");
 
   const closeLogo = useCallback(() => setLogoMenuOpen(false), []);
   const logoMenuRef = useClickOutside<HTMLDivElement>(logoMenuOpen, closeLogo);
@@ -33,6 +34,43 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
 
   const hasArchivedDescendant = (id: number): boolean => {
     return collections.some(c => c.parent_id === id && (c.archived || hasArchivedDescendant(c.id!)));
+  };
+
+  const normalizedCollectionSearch = collectionSearch.trim().toLowerCase();
+  const matchesCollectionSearch = (c: Collection) =>
+    normalizedCollectionSearch.length > 0 && c.name.toLowerCase().includes(normalizedCollectionSearch);
+
+  const hasActiveSearchDescendant = (id: number): boolean => {
+    return collections.some(c => {
+      if (c.parent_id !== id || c.archived) return false;
+      return matchesCollectionSearch(c) || hasActiveSearchDescendant(c.id!);
+    });
+  };
+
+  const hasMatchingSearchDescendant = (id: number, section: "active" | "archived"): boolean => {
+    return collections.some(c => {
+      if (c.parent_id !== id) return false;
+
+      if (section === "active") {
+        return !c.archived && (matchesCollectionSearch(c) || hasMatchingSearchDescendant(c.id!, section));
+      }
+
+      return (c.archived && matchesCollectionSearch(c)) || hasMatchingSearchDescendant(c.id!, section);
+    });
+  };
+
+  const hasTopLevelSearchMatch = (section: "active" | "archived") => {
+    if (!normalizedCollectionSearch) return true;
+
+    return collections.some(c => {
+      if (c.parent_id !== null) return false;
+
+      if (section === "active") {
+        return !c.archived && (matchesCollectionSearch(c) || hasMatchingSearchDescendant(c.id!, section));
+      }
+
+      return (c.archived && matchesCollectionSearch(c)) || hasMatchingSearchDescendant(c.id!, section);
+    });
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -64,6 +102,18 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
 
   const hasPinned = collections.some(c => c.pinned && !c.archived);
   const hasArchived = collections.some(c => c.archived);
+  const pinnedCollections = collections.filter(c =>
+    c.pinned &&
+    !c.archived &&
+    (!normalizedCollectionSearch || matchesCollectionSearch(c) || hasActiveSearchDescendant(c.id!))
+  );
+  const showPinned = pinnedCollections.length > 0;
+  const hasActiveSearchMatch = hasTopLevelSearchMatch("active");
+  const hasArchivedSearchMatch = hasTopLevelSearchMatch("archived");
+  const showSearchEmpty =
+    !!normalizedCollectionSearch &&
+    !hasActiveSearchMatch &&
+    (!hasArchived || !hasArchivedSearchMatch);
 
   return (
     <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
@@ -94,13 +144,24 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
       </div>
       <aside className="sidebar">
         <nav className="sidebar-nav">
-          {hasPinned && (
+          <div className="sidebar-search-wrap">
+            <input
+              type="search"
+              className="sidebar-search"
+              placeholder="Search collections"
+              value={collectionSearch}
+              onChange={e => setCollectionSearch(e.target.value)}
+            />
+          </div>
+
+          {showPinned && (
             <>
               <span className="sidebar-label">Pinned Collections</span>
-              {collections.filter(c => c.pinned && !c.archived).map(c => {
+              {pinnedCollections.map(c => {
                 const collapseKey = `pinned:${c.id}`;
                 const isCollapsed = collapsed[collapseKey];
                 const hasChildren = collections.some(ch => ch.parent_id === c.id);
+                const isSearching = !!normalizedCollectionSearch;
                 return (
                   <React.Fragment key={c.id}>
                     <div className="sidebar-item-row">
@@ -109,7 +170,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
                         onClick={() => navigate(`/collections/${c.id}`)}
                       >
                         {hasChildren ? (
-                          <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+                          <span className={`sidebar-chevron${isCollapsed && !isSearching ? "" : " open"}`} onClick={e => { e.stopPropagation(); if (!isSearching) toggleCollapse(collapseKey); }}>
                             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           </span>
                         ) : <span className="sidebar-chevron" style={{ visibility: "hidden" }} />}
@@ -124,11 +185,12 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
                         <input value={newCollection} onChange={e => setNewCollection(e.target.value)} placeholder="Sub-collection name" autoFocus onBlur={() => { if (!newCollection.trim()) { setShowNewCollection(false); setNewCollectionParent(null); } }} onKeyDown={e => { if (e.key === "Escape") { setShowNewCollection(false); setNewCollectionParent(null); } }} />
                       </form>
                     )}
-                    {!isCollapsed && (
+                    {(!isCollapsed || isSearching) && (
                       <CollectionTree
                         collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
                         section="active" parentId={c.id} depth={1}
                         collapsed={collapsed} toggleCollapse={toggleCollapse} hasArchivedDescendant={hasArchivedDescendant}
+                        searchQuery={collectionSearch}
                       />
                     )}
                   </React.Fragment>
@@ -143,6 +205,7 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
             collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
             collapsed={collapsed} toggleCollapse={toggleCollapse} collapseKey="active:-1"
             hasArchivedDescendant={hasArchivedDescendant}
+            searchQuery={collectionSearch}
             onAddCollection={() => { setNewCollectionParent(null); setShowNewCollection(true); }}
             showNewForm={showNewCollection && newCollectionParent === null} onNewSubmit={handleNewCollection}
             newValue={newCollection} onNewChange={setNewCollection} onNewCancel={() => { setNewCollection(""); setNewCollectionParent(null); setShowNewCollection(false); }}
@@ -156,8 +219,10 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
               collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
               collapsed={collapsed} toggleCollapse={toggleCollapse} collapseKey="archived:-1"
               hasArchivedDescendant={hasArchivedDescendant}
+              searchQuery={collectionSearch}
             />
           )}
+          {showSearchEmpty && <p className="sidebar-search-empty">No matching collections.</p>}
         </nav>
         <div className="sidebar-resize" onMouseDown={onResizeStart} onDoubleClick={() => setSidebarWidth(220)} />
       </aside>

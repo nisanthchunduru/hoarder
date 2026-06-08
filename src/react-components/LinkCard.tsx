@@ -14,6 +14,8 @@ export default function LinkCard({ link, collections, filterCollection, allTags 
   const navigate = useNavigate();
   const [editingTags, setEditingTags] = useState(false);
   const cardRef = useRef<HTMLLIElement>(null);
+  const title = link.title.trim();
+  const showTitle = title && title !== link.url;
 
   useEffect(() => {
     if (!editingTags) return;
@@ -35,7 +37,10 @@ export default function LinkCard({ link, collections, filterCollection, allTags 
     >
       <div className="link-body">
         <a href={link.url} target="_blank" rel="noopener noreferrer" className="link-main">
-          <span className="link-title">{link.url}</span>
+          <span className="link-heading">
+            {showTitle && <span className="link-title">{title}</span>}
+            <span className="link-url">{link.url}</span>
+          </span>
           <span className="link-meta">
             {hostname(link.url)} · {formatAddedDate(link.created_at)}
             {!filterCollection && link.collection_id && collections.find(c => c.id === link.collection_id) && (

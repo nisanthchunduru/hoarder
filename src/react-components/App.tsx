@@ -49,13 +49,19 @@ export default function App() {
 
   const allLinks = useLiveQuery(
     async () => {
-      if (isArchivedSection && !filterCollection) {
-        const archivedCollIds = (await actions.collections()).filter(c => c.archived).map(c => c.id);
-        const archived = tab === "all" ? undefined : tab === "archived" ? 1 : 0;
-        const all = await actions.getLinks(search, archived);
-        return all.filter(l => l.collection_id && archivedCollIds.includes(l.collection_id));
-      }
       const archived = tab === "all" ? undefined : tab === "archived" ? 1 : 0;
+
+      if (!filterCollection) {
+        const archivedCollIds = new Set((await actions.collections()).filter(c => c.archived).map(c => c.id));
+        const all = await actions.getLinks(search, archived);
+
+        if (isArchivedSection) {
+          return all.filter(l => l.collection_id && archivedCollIds.has(l.collection_id));
+        }
+
+        return all.filter(l => !l.collection_id || !archivedCollIds.has(l.collection_id));
+      }
+
       return actions.getLinks(search, archived, undefined, filterCollection);
     },
     [search, tab, filterCollection, isArchivedSection]

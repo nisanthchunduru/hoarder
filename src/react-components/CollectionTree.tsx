@@ -5,7 +5,7 @@ import { Collection } from "../interfaces";
 
 type Section = "active" | "archived";
 
-export default function CollectionTree({ collections, filterCollection, isArchivedSection, section, parentId, depth, collapsed, toggleCollapse, hasArchivedDescendant }: {
+export default function CollectionTree({ collections, filterCollection, isArchivedSection, section, parentId, depth, collapsed, toggleCollapse, hasArchivedDescendant, searchQuery }: {
   collections: (Collection & { id: number })[];
   filterCollection?: number;
   isArchivedSection?: boolean;
@@ -15,6 +15,7 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
   collapsed: Record<string, boolean>;
   toggleCollapse: (key: string) => void;
   hasArchivedDescendant: (id: number) => boolean;
+  searchQuery?: string;
 }) {
   const navigate = useNavigate();
   const [renamingId, setRenamingId] = useState<number | null>(null);
@@ -22,6 +23,8 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
   const [newCollection, setNewCollection] = useState("");
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
+  const normalizedSearch = searchQuery?.trim().toLowerCase() || "";
+  const isSearching = normalizedSearch.length > 0;
 
   const startNew = (pid: number | null) => { setNewCollectionParent(pid); setShowNewCollection(true); };
   const cancelNew = () => { setNewCollection(""); setShowNewCollection(false); setNewCollectionParent(null); };
@@ -41,11 +44,26 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
     else if (collId && +collId !== targetId) actions.moveCollection(+collId, targetId);
   };
 
-  const children = collections.filter(c => {
+  const visibleInSection = (c: Collection) => {
     if ((c.parent_id ?? null) !== parentId) return false;
     if (section === "active") return !c.archived;
     return c.archived || hasArchivedDescendant(c.id);
-  });
+  };
+
+  const subtreeMatchesSearch = (c: Collection): boolean => {
+    const directMatch = section === "active"
+      ? (!c.archived && c.name.toLowerCase().includes(normalizedSearch))
+      : (!!c.archived && c.name.toLowerCase().includes(normalizedSearch));
+
+    return directMatch || collections.some(child => {
+      if (child.parent_id !== c.id || (section === "active" && child.archived)) return false;
+      return subtreeMatchesSearch(child);
+    });
+  };
+
+  const children = collections
+    .filter(visibleInSection)
+    .filter(c => !isSearching || subtreeMatchesSearch(c));
 
   return (
     <>
@@ -54,7 +72,12 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
         const isCollapsed = collapsed[collapseKey];
         const isContextOnly = section === "archived" && !c.archived;
         const isActive = filterCollection === c.id && (section === "archived" === !!isArchivedSection);
-        const hasChildren = collections.some(ch => ch.parent_id === c.id);
+        const hasChildren = collections.some(ch => {
+          if (ch.parent_id !== c.id) return false;
+          if (section === "active" && ch.archived) return false;
+          if (isSearching && !subtreeMatchesSearch(ch)) return false;
+          return section === "active" || ch.archived || hasArchivedDescendant(ch.id!);
+        });
 
         return (
           <div key={c.id}>
@@ -81,7 +104,7 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
                 onDrop={e => handleDrop(e, c.id)}
               >
                 {hasChildren ? (
-                  <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+                  <span className={`sidebar-chevron${isCollapsed && !isSearching ? "" : " open"}`} onClick={e => { e.stopPropagation(); if (!isSearching) toggleCollapse(collapseKey); }}>
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2.5l3 2.5-3 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </span>
                 ) : <span className="sidebar-chevron" style={{ visibility: "hidden" }} />}
@@ -106,11 +129,12 @@ export default function CollectionTree({ collections, filterCollection, isArchiv
                 <input value={newCollection} onChange={e => setNewCollection(e.target.value)} placeholder="Sub-collection name" autoFocus onBlur={() => { if (!newCollection.trim()) cancelNew(); }} onKeyDown={e => { if (e.key === "Escape") cancelNew(); }} />
               </form>
             )}
-            {!isCollapsed && (
+            {(!isCollapsed || isSearching) && (
               <CollectionTree
                 collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
                 section={section} parentId={c.id} depth={depth + 1}
                 collapsed={collapsed} toggleCollapse={toggleCollapse} hasArchivedDescendant={hasArchivedDescendant}
+                searchQuery={searchQuery}
               />
             )}
           </div>

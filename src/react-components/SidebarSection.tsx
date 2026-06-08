@@ -12,7 +12,7 @@ const PlusSvg = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
 );
 
-export default function SidebarSection({ label, section, allLabel, allPath, isActive, collections, filterCollection, isArchivedSection, collapsed, toggleCollapse, collapseKey, hasArchivedDescendant, onAddCollection, showNewForm, onNewSubmit, newValue, onNewChange, onNewCancel, droppable }: {
+export default function SidebarSection({ label, section, allLabel, allPath, isActive, collections, filterCollection, isArchivedSection, collapsed, toggleCollapse, collapseKey, hasArchivedDescendant, searchQuery, onAddCollection, showNewForm, onNewSubmit, newValue, onNewChange, onNewCancel, droppable }: {
   label: string;
   section: Section;
   allLabel: string;
@@ -25,6 +25,7 @@ export default function SidebarSection({ label, section, allLabel, allPath, isAc
   toggleCollapse: (key: string) => void;
   collapseKey: string;
   hasArchivedDescendant: (id: number) => boolean;
+  searchQuery?: string;
   onAddCollection?: () => void;
   showNewForm?: boolean;
   onNewSubmit?: (e: React.FormEvent) => void;
@@ -35,6 +36,7 @@ export default function SidebarSection({ label, section, allLabel, allPath, isAc
 }) {
   const navigate = useNavigate();
   const isCollapsed = collapsed[collapseKey];
+  const isSearching = !!searchQuery?.trim();
 
   return (
     <>
@@ -48,7 +50,7 @@ export default function SidebarSection({ label, section, allLabel, allPath, isAc
           onDragLeave={droppable ? (e => e.currentTarget.classList.remove("drop-over")) : undefined}
           onDrop={droppable}
         >
-          <span className={`sidebar-chevron${isCollapsed ? "" : " open"}`} onClick={e => { e.stopPropagation(); toggleCollapse(collapseKey); }}>
+          <span className={`sidebar-chevron${isCollapsed && !isSearching ? "" : " open"}`} onClick={e => { e.stopPropagation(); if (!isSearching) toggleCollapse(collapseKey); }}>
             <ChevronSvg />
           </span>
           {allLabel}
@@ -66,11 +68,12 @@ export default function SidebarSection({ label, section, allLabel, allPath, isAc
           <input value={newValue} onChange={e => onNewChange?.(e.target.value)} placeholder="Collection name" autoFocus onBlur={() => { if (!newValue?.trim()) onNewCancel?.(); }} onKeyDown={e => { if (e.key === "Escape") onNewCancel?.(); }} />
         </form>
       )}
-      {!isCollapsed && (
+      {(!isCollapsed || isSearching) && (
         <CollectionTree
           collections={collections} filterCollection={filterCollection} isArchivedSection={isArchivedSection}
           section={section} parentId={null} depth={0}
           collapsed={collapsed} toggleCollapse={toggleCollapse} hasArchivedDescendant={hasArchivedDescendant}
+          searchQuery={searchQuery}
         />
       )}
     </>
