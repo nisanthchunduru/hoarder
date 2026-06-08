@@ -4,7 +4,10 @@ Privacy-focused read-it-later app
 
 Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar read-it-later services
 
-<img width="5344" height="2864" alt="image" src="https://github.com/user-attachments/assets/6a006159-49ef-4489-a1c5-437797f0f4fe" />
+<img width="5344" height="2872" alt="image" src="https://github.com/user-attachments/assets/7dea1bf4-c38b-4912-a15f-00b5ef9ba9db" />
+
+<img width="5344" height="2872" alt="image" src="https://github.com/user-attachments/assets/0e8efb1b-9d45-4c7a-a4c2-f093dde5d04a" />
+
 
 ## Setup
 
