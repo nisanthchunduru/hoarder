@@ -1,12 +1,12 @@
 import { tagColor } from "../utils";
 
 export default function Chip({ name, onRemove }: { name: string; onRemove?: () => void }) {
-  const c = tagColor(name);
+  const hue = tagColor(name);
   return (
-    <span className="chip" style={{ background: c.bg, borderColor: c.border, color: c.text }}>
+    <span className="chip" style={{ "--chip-hue": hue } as React.CSSProperties}>
       {name}
       {onRemove && (
-        <button className="chip-x" onClick={e => { e.stopPropagation(); onRemove(); }} style={{ color: c.text }} aria-label={`Remove ${name}`}>×</button>
+        <button className="chip-x" onClick={e => { e.stopPropagation(); onRemove(); }} aria-label={`Remove ${name}`}>×</button>
       )}
     </span>
   );

@@ -9,6 +9,9 @@
   font-weight: 500;
   white-space: nowrap;
   line-height: 1.6;
+  background: hsl(var(--chip-hue) 90% 96%);
+  border-color: hsl(var(--chip-hue) 80% 82%);
+  color: hsl(var(--chip-hue) 70% 30%);
 }
 
 .chip-x {
@@ -26,9 +29,24 @@
   justify-content: center;
   position: relative;
   top: 0.5px;
+  color: inherit;
 }
 
 .chip-x:hover { opacity: 1; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .chip {
+    background: hsl(var(--chip-hue) 38% 22%);
+    border-color: hsl(var(--chip-hue) 42% 36%);
+    color: hsl(var(--chip-hue) 78% 78%);
+  }
+}
+
+:root[data-theme='dark'] .chip {
+  background: hsl(var(--chip-hue) 38% 22%);
+  border-color: hsl(var(--chip-hue) 42% 36%);
+  color: hsl(var(--chip-hue) 78% 78%);
+}
 
 .tag-row {
   display: flex;
