@@ -43,6 +43,29 @@ export async function toggleArchive(id: number): Promise<void> {
   await updateLink(id, { archived: link.archived ? 0 : 1 });
 }
 
+export async function renameLink(id: number, title: string): Promise<void> {
+  const trimmed = title.trim();
+  if (trimmed) {
+    await updateLink(id, { title: trimmed });
+  } else {
+    // Empty title resets to the URL, which the UI treats as "no title".
+    const link = await getLink(id);
+    await updateLink(id, { title: link.url });
+  }
+}
+
+export async function updateLinkDetails(id: number, updates: { title: string; url: string }): Promise<void> {
+  const link = await getLink(id);
+  const url = updates.url.trim();
+  if (!url) return;
+
+  const title = updates.title.trim() || url;
+  await updateLink(id, {
+    url,
+    title: title === link.url && !updates.title.trim() ? url : title,
+  });
+}
+
 // ── Collection Actions ──
 
 export async function moveCollection(id: number, parentId: number | null): Promise<void> {
@@ -85,6 +108,8 @@ const actions = {
   setTags: setLinkTags,
   setCollection: setLinkCollection,
   archiveLink: toggleArchive,
+  renameLink,
+  updateLinkDetails,
   deleteLink,
   tags: getTags,
   collections: getCollections,

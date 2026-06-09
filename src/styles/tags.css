@@ -76,8 +76,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  border-bottom: 1.5px solid var(--border);
   background: var(--bg);
 }
 
@@ -88,13 +88,14 @@
   outline: none;
   background: transparent;
   font-size: 13px;
+  line-height: 1.5;
   flex: 1;
   min-width: 0;
 }
 
 .tag-popover-input-wrap input::placeholder { color: var(--muted); opacity: 0.6; }
 
-.tag-popover-body { max-height: 180px; overflow-y: auto; padding: 0 10px; }
+.tag-popover-body { max-height: 180px; overflow-y: auto; padding: 6px 10px 0; }
 .tag-popover-section { margin-bottom: 8px; }
 
 .tag-popover-chips { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -109,8 +110,7 @@
   transition: background 0.1s;
 }
 
-.tag-popover-option:hover,
-.tag-popover-option.hl { background: var(--hover-bg); }
+.tag-popover-option:hover { background: var(--hover-bg); }
 
 .tag-popover-create {
   display: block;
