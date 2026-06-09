@@ -147,7 +147,14 @@ export default function App() {
         {filterCollection && <Breadcrumb collections={collections} filterCollection={filterCollection} isArchived={!!collections.find(c => c.id === filterCollection)?.archived} />}
 
         <div className="page-header">
-          <h2 className="page-title">
+          <h2
+            className="page-title"
+            onDoubleClick={() => {
+              if (!currentCollection || renamingTitle) return;
+              setRenameValue(currentCollection.name);
+              setRenamingTitle(true);
+            }}
+          >
             {renamingTitle && filterCollection ? (
               <span className="page-title-wrap">
                 <span className="page-title-measure">{renameValue || " "}</span>
@@ -167,7 +174,7 @@ export default function App() {
               ? collections.find(c => c.id === filterCollection)!.name
               : isArchivedSection ? "Archived" : "All"}
           </h2>
-          {currentCollection && !renamingTitle && (
+          {currentCollection && (
             <button
               type="button"
               className={`page-title-pin${currentCollection.pinned ? " pinned" : ""}`}
