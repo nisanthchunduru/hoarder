@@ -36,7 +36,7 @@ export default function Breadcrumb({ collections, filterCollection, isArchived }
             <span className="breadcrumb-sep-wrap" ref={dropdownId === c.id ? ref : undefined}>
               <span className="breadcrumb-sep" onClick={() => setDropdownId(dropdownId === c.id ? null : c.id)}>›</span>
               {dropdownId === c.id && siblings.length > 1 && (
-                <div className="breadcrumb-dropdown">
+                <div className="breadcrumb-dropdown popover-panel popover-size-sm">
                   {siblings.map(s => (
                     <button key={s.id} className={s.id === c.id ? "active" : ""} onClick={() => { navigate(`${isArchived ? "/archived" : ""}/collections/${s.id}`); setDropdownId(null); }}>{s.name}</button>
                   ))}

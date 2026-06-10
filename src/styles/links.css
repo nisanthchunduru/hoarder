@@ -122,15 +122,6 @@
   line-height: 1.2;
 }
 
-.link-edit-popover {
-  width: 300px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-popover);
-  overflow: hidden;
-}
-
 .link-edit-field {
   display: block;
 }

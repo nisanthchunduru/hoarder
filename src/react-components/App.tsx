@@ -240,7 +240,7 @@ export default function App() {
                 <svg className="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
               {tagMenuOpen && (
-                <div className="tag-filter-dropdown">
+                <div className="tag-filter-dropdown popover-panel popover-size-md">
                   {allVisible.map(name => {
                     const selected = filterTags.includes(name);
                     return (
@@ -262,7 +262,7 @@ export default function App() {
               <svg className="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M2 3l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
             {groupMenuOpen && (
-              <div className="group-dropdown">
+              <div className="group-dropdown popover-panel popover-size-sm">
                 <button className={groupBy === "none" ? "active" : ""} onClick={() => { setGroupBy("none"); setGroupMenuOpen(false); }}>None</button>
                 <div className="group-dropdown-divider" />
                 <button className={groupBy === "domain" ? "active" : ""} onClick={() => { setGroupBy("domain"); setGroupMenuOpen(false); }}>Domain</button>

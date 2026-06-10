@@ -56,15 +56,6 @@
   padding: 2px 0;
 }
 
-.tag-popover {
-  width: 260px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-popover);
-  overflow: hidden;
-}
-
 .tag-popover-input-wrap {
   display: flex;
   align-items: center;
@@ -150,11 +141,6 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 160px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 200;
   animation: popIn 0.12s ease-out;

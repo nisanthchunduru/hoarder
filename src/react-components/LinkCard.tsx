@@ -73,7 +73,7 @@ export default function LinkCard({ link, collections, filterCollection, allTags 
         <AnchoredPopover
           open={editingLink}
           onOpenChange={setEditOpen}
-          contentClassName="link-edit-popover"
+          contentClassName="popover-panel popover-panel-rich popover-size-lg"
           trigger={({ open, toggle }) => (
             <button
               type="button"
@@ -133,7 +133,7 @@ export default function LinkCard({ link, collections, filterCollection, allTags 
         <AnchoredPopover
           open={editingTags}
           onOpenChange={setTagsOpen}
-          contentClassName="tag-popover"
+          contentClassName="popover-panel popover-panel-rich popover-size-lg"
           trigger={({ open, toggle }) => (
             <button type="button" className={`link-card-action${open ? " active" : ""}`} title="Add label" aria-label="Add label" onClick={toggle}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

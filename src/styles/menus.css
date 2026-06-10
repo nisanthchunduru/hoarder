@@ -11,12 +11,24 @@
   animation: popIn 0.12s ease-out;
 }
 
-.dropdown-menu-content {
-  min-width: 140px;
+.popover-panel {
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
+}
+
+.popover-panel-rich {
+  border-radius: 12px;
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+}
+
+.popover-size-sm { min-width: 120px; }
+.popover-size-md { min-width: 160px; }
+.popover-size-lg { width: 260px; }
+
+.dropdown-menu-content {
   padding: 4px;
 }
 

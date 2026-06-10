@@ -119,11 +119,6 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 120px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 200;
   animation: popIn 0.12s ease-out;
@@ -218,11 +213,6 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 120px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
   padding: 4px;
   z-index: 150;
   animation: popIn 0.12s ease-out;

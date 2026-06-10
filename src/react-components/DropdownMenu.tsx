@@ -17,7 +17,7 @@ export default function DropdownMenu({
       open={open}
       onOpenChange={setOpen}
       className={`dropdown-menu ${className}`.trim()}
-      contentClassName="dropdown-menu-content"
+      contentClassName="dropdown-menu-content popover-panel popover-size-md"
       trigger={({ open, toggle }) => trigger({ open, toggle })}
     >
       {children}
