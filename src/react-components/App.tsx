@@ -9,6 +9,7 @@ import Sidebar from "./Sidebar";
 import Breadcrumb from "./Breadcrumb";
 import LinkCard from "./LinkCard";
 import Chip from "./Chip";
+import DropdownMenu from "./DropdownMenu";
 import { useTheme } from "../useTheme";
 import "../style.css";
 
@@ -35,16 +36,13 @@ export default function App() {
   const [groupBy, setGroupBy] = useState<"none" | "domain" | "date">("none");
   const [groupMenuOpen, setGroupMenuOpen] = useState(false);
   const { theme, cycle } = useTheme();
-  const [collMenuOpen, setCollMenuOpen] = useState(false);
   const [renamingTitle, setRenamingTitle] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
 
   const closeGroup = useCallback(() => setGroupMenuOpen(false), []);
-  const closeColl = useCallback(() => setCollMenuOpen(false), []);
   const closeTag = useCallback(() => setTagMenuOpen(false), []);
   const groupRef = useClickOutside<HTMLDivElement>(groupMenuOpen, closeGroup);
-  const collMenuRef = useClickOutside<HTMLDivElement>(collMenuOpen, closeColl);
   const tagMenuRef = useClickOutside<HTMLDivElement>(tagMenuOpen, closeTag);
 
   const allLinks = useLiveQuery(
@@ -186,34 +184,38 @@ export default function App() {
             </button>
           )}
           {filterCollection && (
-            <div className="card-menu" ref={collMenuRef}>
-              <button className="card-menu-trigger" onClick={() => setCollMenuOpen(!collMenuOpen)}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="4" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="12" cy="8" r="1.2" fill="currentColor"/>
-                </svg>
-              </button>
-              {collMenuOpen && (
-                <div className="card-menu-dropdown">
+            <DropdownMenu
+              className="card-menu"
+              trigger={({ toggle }) => (
+                <button type="button" className="card-menu-trigger" aria-label="Collection actions" onClick={toggle}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="4" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+                  </svg>
+                </button>
+              )}
+            >
+              {({ close }) => (
+                <>
                   <button onClick={() => {
-                    setCollMenuOpen(false);
                     const coll = collections.find(c => c.id === filterCollection);
                     if (coll) { setRenameValue(coll.name); setRenamingTitle(true); }
+                    close();
                   }}>Rename</button>
                   <button onClick={() => {
                     actions.archiveCollection(filterCollection!);
-                    setCollMenuOpen(false);
+                    close();
                     navigate("/");
                   }}>{collections.find(c => c.id === filterCollection)?.archived ? "Unarchive" : "Archive"}</button>
                   <button className="danger" onClick={async () => {
                     if (window.confirm(`Delete "${collections.find(c => c.id === filterCollection)!.name}"?`)) {
                       await actions.deleteCollection(filterCollection);
+                      close();
                       navigate("/");
-                      setCollMenuOpen(false);
                     }
                   }}>Delete</button>
-                </div>
+                </>
               )}
-            </div>
+            </DropdownMenu>
           )}
         </div>
 

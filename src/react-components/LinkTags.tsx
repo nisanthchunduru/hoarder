@@ -3,19 +3,32 @@ import actions from "../actions";
 import { Link } from "../interfaces";
 import Chip from "./Chip";
 
-export default function LinkTags({ link, allTags, editing: controlledEditing, onEditingChange }: {
+export default function LinkTags({ link }: {
+  link: Link;
+}) {
+  const quickRemove = (t: string) => {
+    const next = link.tags.filter(x => x !== t);
+    actions.setTags(link.id!, next);
+  };
+
+  if (link.tags.length === 0) return null;
+
+  return (
+    <div className="tag-row">
+      {link.tags.map(t => <Chip key={t} name={t} onRemove={() => quickRemove(t)} />)}
+    </div>
+  );
+}
+
+export function LinkTagEditor({ link, allTags, onClose }: {
   link: Link;
   allTags: string[];
-  editing?: boolean;
-  onEditingChange?: (editing: boolean) => void;
+  onClose: () => void;
 }) {
-  const [internalEditing, setInternalEditing] = useState(false);
   const [tags, setTags] = useState(link.tags);
   const [input, setInput] = useState("");
   const [hlIndex, setHlIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const editing = controlledEditing ?? internalEditing;
-  const setEditing = onEditingChange ?? setInternalEditing;
 
   const query = input.trim().toLowerCase();
   const filtered = (query
@@ -24,7 +37,8 @@ export default function LinkTags({ link, allTags, editing: controlledEditing, on
   ).filter(s => !tags.includes(s)).slice(0, 6);
 
   useEffect(() => { setHlIndex(-1); }, [input]);
-  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+  useEffect(() => { setTags(link.tags); }, [link.tags]);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
   const addTag = (raw: string) => {
     const t = raw.trim().toLowerCase();
@@ -43,8 +57,8 @@ export default function LinkTags({ link, allTags, editing: controlledEditing, on
     actions.setTags(link.id!, next);
   };
 
-  const cancel = () => { setTags(link.tags); setEditing(false); setInput(""); };
-  const close = () => { setEditing(false); setInput(""); };
+  const cancel = () => { setTags(link.tags); setInput(""); onClose(); };
+  const close = () => { setInput(""); onClose(); };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown" && filtered.length) { e.preventDefault(); setHlIndex(i => Math.min(i + 1, filtered.length - 1)); }
@@ -57,53 +71,30 @@ export default function LinkTags({ link, allTags, editing: controlledEditing, on
     else if (e.key === "Escape") cancel();
   };
 
-  if (!editing) {
-    const quickRemove = (t: string) => {
-      const next = link.tags.filter(x => x !== t);
-      setTags(next);
-      actions.setTags(link.id!, next);
-    };
-    if (link.tags.length === 0) return null;
-    return (
-      <div className="tag-row">
-        {link.tags.map(t => <Chip key={t} name={t} onRemove={() => quickRemove(t)} />)}
-      </div>
-    );
-  }
-
   return (
     <>
-      {link.tags.length > 0 && (
-        <div className="tag-row">
-          {link.tags.map(t => <Chip key={t} name={t} />)}
-        </div>
-      )}
-      <div className="tag-popover-anchor">
-        <div className="tag-popover">
-          <div className="tag-popover-input-wrap">
-            <svg className="tag-popover-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3"/><path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKeyDown} placeholder="Add tag" aria-autocomplete="list" />
+      <div className="tag-popover-input-wrap">
+        <svg className="tag-popover-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3"/><path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+        <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKeyDown} placeholder="Add tag" aria-autocomplete="list" />
+      </div>
+      <div className="tag-popover-body">
+        {tags.length > 0 && (
+          <div className="tag-popover-section">
+            <div className="tag-popover-chips">{tags.map(t => <Chip key={t} name={t} onRemove={() => removeTag(t)} />)}</div>
           </div>
-          <div className="tag-popover-body">
-            {tags.length > 0 && (
-              <div className="tag-popover-section">
-                <div className="tag-popover-chips">{tags.map(t => <Chip key={t} name={t} onRemove={() => removeTag(t)} />)}</div>
-              </div>
-            )}
-            {filtered.length > 0 && (
-              <div className="tag-popover-section">
-                <ul className="tag-popover-list" role="listbox">
-                  {filtered.map((s, i) => (
-                    <li key={s} role="option" aria-selected={i === hlIndex} className={`tag-popover-option${i === hlIndex ? " hl" : ""}`} onMouseDown={e => { e.preventDefault(); addTag(s); }} onMouseEnter={() => setHlIndex(i)}><Chip name={s} /></li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {query && !allTags.includes(query) && !tags.includes(query) && (
-              <button className="tag-popover-create" onMouseDown={e => { e.preventDefault(); addTag(input); }}>Create "<strong>{query}</strong>"</button>
-            )}
+        )}
+        {filtered.length > 0 && (
+          <div className="tag-popover-section">
+            <ul className="tag-popover-list" role="listbox">
+              {filtered.map((s, i) => (
+                <li key={s} role="option" aria-selected={i === hlIndex} className={`tag-popover-option${i === hlIndex ? " hl" : ""}`} onMouseDown={e => { e.preventDefault(); addTag(s); }} onMouseEnter={() => setHlIndex(i)}><Chip name={s} /></li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
+        {query && !allTags.includes(query) && !tags.includes(query) && (
+          <button className="tag-popover-create" onMouseDown={e => { e.preventDefault(); addTag(input); }}>Create "<strong>{query}</strong>"</button>
+        )}
       </div>
     </>
   );

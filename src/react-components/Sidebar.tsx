@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useClickOutside } from "../useClickOutside";
 import actions from "../actions";
 import { exportData } from "../export";
 import { importData } from "../import";
 import { Collection } from "../interfaces";
 import SidebarSection from "./SidebarSection";
 import CollectionTree from "./CollectionTree";
+import DropdownMenu from "./DropdownMenu";
 
 export default function Sidebar({ collections, filterCollection, isArchivedSection }: {
   collections: (Collection & { id: number })[];
@@ -18,14 +18,10 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
     try { return JSON.parse(localStorage.getItem("sidebarCollapsed") || "{}"); } catch { return {}; }
   });
   const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("sidebarWidth")) || 220);
-  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
   const [newCollection, setNewCollection] = useState("");
   const [newCollectionParent, setNewCollectionParent] = useState<number | null>(null);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [collectionSearch, setCollectionSearch] = useState("");
-
-  const closeLogo = useCallback(() => setLogoMenuOpen(false), []);
-  const logoMenuRef = useClickOutside<HTMLDivElement>(logoMenuOpen, closeLogo);
 
   useEffect(() => { localStorage.setItem("sidebarWidth", String(sidebarWidth)); }, [sidebarWidth]);
   useEffect(() => { localStorage.setItem("sidebarCollapsed", JSON.stringify(collapsed)); }, [collapsed]);
@@ -119,28 +115,33 @@ export default function Sidebar({ collections, filterCollection, isArchivedSecti
     <div className="sidebar-wrapper" style={{ width: sidebarWidth }}>
       <div className="sidebar-logo-row">
         <h1 className="sidebar-logo">Hoarder <span className="beta-badge">beta</span></h1>
-        <div className="card-menu" ref={logoMenuRef}>
-          <button className="card-menu-trigger" onClick={() => setLogoMenuOpen(!logoMenuOpen)}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="4" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="12" cy="8" r="1.2" fill="currentColor"/>
-            </svg>
-          </button>
-          {logoMenuOpen && (
-            <div className="card-menu-dropdown logo-menu-dropdown">
+        <DropdownMenu
+          className="card-menu"
+          trigger={({ toggle }) => (
+            <button type="button" className="card-menu-trigger" aria-label="App actions" onClick={toggle}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="4" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+              </svg>
+            </button>
+          )}
+        >
+          {({ close }) => (
+            <>
               <button onClick={async () => {
                 const json = await exportData();
                 const blob = new Blob([json], { type: "application/json" });
                 const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "hoarder.json"; a.click();
-                setLogoMenuOpen(false);
+                close();
               }}>Export data</button>
               <button onClick={() => {
                 const input = document.createElement("input"); input.type = "file"; input.accept = ".json";
                 input.onchange = async () => { const file = input.files?.[0]; if (!file) return; const json = await file.text(); if (window.confirm("Importing data will replace all existing data. Continue?")) await importData(json); };
-                input.click(); setLogoMenuOpen(false);
+                input.click();
+                close();
               }}>Import data</button>
-            </div>
+            </>
           )}
-        </div>
+        </DropdownMenu>
       </div>
       <aside className="sidebar">
         <nav className="sidebar-nav">

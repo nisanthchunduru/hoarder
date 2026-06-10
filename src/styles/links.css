@@ -24,14 +24,14 @@
 
 .link-card-actions {
   position: absolute;
-  left: 14px;
-  bottom: -12px;
+  top: 50%;
+  right: 14px;
   display: flex;
-  gap: 4px;
-  padding: 0 4px;
+  align-items: center;
+  gap: 6px;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(2px);
+  transform: translateY(calc(-50% + 2px));
   transition:
     opacity 0.12s,
     transform 0.12s;
@@ -42,24 +42,23 @@
 .link-card:focus-within .link-card-actions {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translateY(-50%);
 }
 
 .link-card-action {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: 1.5px solid var(--border);
+  border: none;
   border-radius: 9999px;
-  background: var(--surface);
+  background: var(--hover-bg);
   color: var(--muted);
   cursor: pointer;
   line-height: 0;
   transition:
     background 0.15s,
-    border-color 0.15s,
     color 0.15s;
 }
 
@@ -70,19 +69,7 @@
 .link-card-action:hover,
 .link-card-action.active {
   background: var(--accent-bg);
-  border-color: var(--accent);
   color: var(--accent);
-}
-
-.link-card .tag-popover-anchor {
-  position: absolute;
-  top: calc(100% + 16px);
-  left: 74px;
-  z-index: 200;
-}
-
-.link-card .tag-popover {
-  position: static;
 }
 
 .link-body {
@@ -136,16 +123,11 @@
 }
 
 .link-edit-popover {
-  position: absolute;
-  top: calc(100% + 16px);
-  left: 46px;
   width: 300px;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow-popover);
-  z-index: 200;
-  animation: popIn 0.15s ease-out;
   overflow: hidden;
 }
 
@@ -240,24 +222,6 @@
 .link-edit-save:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-.link-card-action-title {
-  opacity: 0;
-  transform: translateY(2px);
-  transition:
-    opacity 0.12s,
-    transform 0.12s,
-    background 0.15s,
-    border-color 0.15s,
-    color 0.15s;
-}
-
-.link-card:hover .link-card-action-title,
-.link-card:focus-within .link-card-action-title,
-.link-card-action-title.active {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .link-meta {

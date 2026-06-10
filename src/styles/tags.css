@@ -56,19 +56,12 @@
   padding: 2px 0;
 }
 
-.tag-popover-anchor { position: relative; }
-
 .tag-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
   width: 260px;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow-popover);
-  z-index: 200;
-  animation: popIn 0.15s ease-out;
   overflow: hidden;
 }
 
