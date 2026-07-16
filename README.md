@@ -1,4 +1,4 @@
-# Hoarder
+# hoarder
 
 Privacy-focused read-it-later app
 
