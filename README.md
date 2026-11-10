@@ -1,8 +1,8 @@
 # hoarder
 
-Privacy-focused read-it-later app
+Self-hostable read-it-later app
 
-Hoarder is a privacy-focused alternative to Instapaper, Pocket and similar read-it-later services
+Hoarder is a self-hostable privacy-focused alternative to Instapaper, Pocket and similar read-it-later services
 
 <img width="5344" height="2872" alt="image" src="https://github.com/user-attachments/assets/7dea1bf4-c38b-4912-a15f-00b5ef9ba9db" />
 
